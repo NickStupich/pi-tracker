@@ -2,6 +2,7 @@
 
 from flask import Flask, render_template, Response
 import webcam
+import picam
 
 app = Flask(__name__)
 
@@ -17,7 +18,8 @@ def gen(camera):
 
 @app.route('/video_feed')
 def video_feed():
-    cam = webcam.VideoCamera()
+    #cam = webcam.VideoCamera()
+    cam = picam.VideoCamera()
     return Response(gen(cam),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
