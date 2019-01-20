@@ -1,14 +1,42 @@
 #!/usr/bin/env python
 
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request, redirect
+# from flask_wtf import FlaskForm
+from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField
+
 import webcam
-import picam
+# import picam
+import files_cam
+
+
+#cam = webcam.VideoCamera()
+# cam = picam.VideoCamera()
+cam = files_cam.VideoCamera()
+print('MADE NEW CAM')
 
 app = Flask(__name__)
 
-@app.route('/')
+class ShutterSpeedForm(Form):
+    speed = IntegerField('Shutter Speed:', validators=[validators.required()])
+    
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    shutterSpeedForm = ShutterSpeedForm()
+    shutterSpeedForm.speed.data = cam.getShutterMicroseconds()
+
+    return render_template('index.html', form = shutterSpeedForm)
+    
+@app.route('/updateShutterSpeed', methods=['POST'])
+def updateSpeed():
+    newSpeed = request.form['speed']
+    print('setting new speed: ', newSpeed)
+    newSpeedFloat = float(newSpeed)
+    cam.setShutterMicroseconds(newSpeedFloat)
+
+    return redirect('/')
+
 
 def gen(camera):
     while True:
@@ -18,8 +46,6 @@ def gen(camera):
 
 @app.route('/video_feed')
 def video_feed():
-    #cam = webcam.VideoCamera()
-    cam = picam.VideoCamera()
     return Response(gen(cam),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 

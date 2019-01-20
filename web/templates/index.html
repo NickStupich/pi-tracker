@@ -3,6 +3,15 @@
     <title>Tracker Config and Guiding</title>
   </head>
   <body>
+
+<form action="/updateShutterSpeed" method="post">
+            {{ form.csrf }}
+<div class="input text">
+                {{ form.speed.label }} {{ form.speed }}</div>
+<div class="input submit">
+                <input type="submit" value="Update"></div>
+</form>
+
     <h1>Video Stream</h1>
     <img id="bg" src="{{ url_for('video_feed') }}">
   </body>
