@@ -5,28 +5,27 @@ from flask import Flask, render_template, Response, request, redirect
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField
 
 import webcam
-# import picam
+import picam
 import files_cam
 
-
-#cam = webcam.VideoCamera()
-# cam = picam.VideoCamera()
-cam = files_cam.VideoCamera()
-print('MADE NEW CAM')
+cam = None
 
 app = Flask(__name__)
 
 class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
     
-
+class SaveEnabledForm(Form):
+    save = IntegerField('Save Images: ')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     shutterSpeedForm = ShutterSpeedForm()
     shutterSpeedForm.speed.data = cam.getShutterMicroseconds()
 
-    return render_template('index.html', form = shutterSpeedForm)
+    saveEnabledForm = SaveEnabledForm()
+
+    return render_template('index.html', shutterForm = shutterSpeedForm, saveForm = saveEnabledForm)
     
 @app.route('/updateShutterSpeed', methods=['POST'])
 def updateSpeed():
@@ -37,6 +36,12 @@ def updateSpeed():
 
     return redirect('/')
 
+@app.route('/updateSavingEnabled', methods=['POST'])
+def updateSaving():
+    saveEnabled = request.form['save']
+    print('setting saving to: ', saveEnabled)
+    cam.setSavingEnabled(saveEnabled)
+    return redirect('/')
 
 def gen(camera):
     while True:
@@ -50,4 +55,10 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    if cam is None:
+        print('MAKING NEW CAM')
+        #cam = webcam.VideoCamera()
+        cam = picam.VideoCamera()
+        # cam = files_cam.VideoCamera()
+        print('MADE NEW CAM')
+    app.run(host='0.0.0.0', debug=False)
