@@ -4,23 +4,6 @@
   </head>
   <body>
 
-<form action="/updateShutterSpeed" method="post">
-            {{ shutterForm.csrf }}
-<div class="input text">
-                {{ shutterForm.speed.label }} {{ shutterForm.speed }}</div>
-<div class="input submit">
-                <input type="submit" value="Update"></div>
-</form>
-
-<form action="/updateSavingEnabled" method="post">
-            {{ saveForm.csrf }}
-<div class="input text">
-                {{ saveForm.save.label }} {{ saveForm.save }}</div>
-<div class="input submit">
-                <input type="submit" value="Update"></div>
-</form>
-
-
     <h1>Video Stream</h1>
     <img id="bg" src="{{ url_for('video_feed') }}">
   </body>

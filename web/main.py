@@ -20,18 +20,21 @@ class SaveEnabledForm(Form):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    shutterSpeedForm = ShutterSpeedForm()
-    shutterSpeedForm.speed.data = cam.getShutterMicroseconds()
+    print('index')
+    save = int(request.args.get('save', '0'))
+    shutterSpeed = int(request.args.get('shutter', str(cam.getShutterMicroseconds())))
 
-    saveEnabledForm = SaveEnabledForm()
+    cam.setShutterMicroseconds(shutterSpeed)
+    cam.setSavingEnabled(save)
 
-    return render_template('index.html', shutterForm = shutterSpeedForm, saveForm = saveEnabledForm)
+    return render_template('index.html')
     
 @app.route('/updateShutterSpeed', methods=['POST'])
 def updateSpeed():
+    print('starting to update shutter speed')
     newSpeed = request.form['speed']
     print('setting new speed: ', newSpeed)
-    newSpeedFloat = float(newSpeed)
+    newSpeedFloat = int(newSpeed)
     cam.setShutterMicroseconds(newSpeedFloat)
 
     return redirect('/')
@@ -46,8 +49,9 @@ def updateSaving():
 def gen(camera):
     while True:
         frame = camera.get_frame()
+        #print(type(frame))
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n\r\n')
 
 @app.route('/video_feed')
 def video_feed():
