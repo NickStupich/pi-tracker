@@ -1,68 +1,56 @@
 #!/usr/bin/env python
+from importlib import import_module
+import os
+from flask import Flask, render_template, Response, redirect, request
 
-from flask import Flask, render_template, Response, request, redirect
-# from flask_wtf import FlaskForm
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField
 
-import webcam
-import picam
-import files_cam
+# import camera driver
+if os.environ.get('CAMERA'):
+    Camera = import_module('camera_' + os.environ['CAMERA']).Camera
+else:
+    from camera_pi import Camera
 
-cam = None
+# Raspberry Pi camera module (requires picamera package)
+# from camera_pi import Camera
 
 app = Flask(__name__)
+
 
 class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
     
-class SaveEnabledForm(Form):
-    save = IntegerField('Save Images: ')
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
-    print('index')
-    save = int(request.args.get('save', '0'))
-    shutterSpeed = int(request.args.get('shutter', str(cam.getShutterMicroseconds())))
-
-    cam.setShutterMicroseconds(shutterSpeed)
-    cam.setSavingEnabled(save)
-
-    return render_template('index.html')
     
-@app.route('/updateShutterSpeed', methods=['POST'])
-def updateSpeed():
-    print('starting to update shutter speed')
-    newSpeed = request.form['speed']
-    print('setting new speed: ', newSpeed)
-    newSpeedFloat = int(newSpeed)
-    cam.setShutterMicroseconds(newSpeedFloat)
+    shutterSpeedForm = ShutterSpeedForm()
+    shutterSpeedForm.speed.data = 10#cam.getShutterMicroseconds()
 
-    return redirect('/')
+    return render_template('index.html', form = shutterSpeedForm)
 
-@app.route('/updateSavingEnabled', methods=['POST'])
-def updateSaving():
-    saveEnabled = request.form['save']
-    print('setting saving to: ', saveEnabled)
-    cam.setSavingEnabled(saveEnabled)
+@app.route('/changeSettings', methods=['POST'])
+def changeSettings():
+    newSpeed = int(request.form['speed'])
+    Camera.set_shutter_speed(newSpeed)
     return redirect('/')
 
 def gen(camera):
+    """Video streaming generator function."""
     while True:
         frame = camera.get_frame()
-        #print(type(frame))
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen(cam),
+    
+    #Camera.set_shutter_speed(500)
+    """Video streaming route. Put this in the src attribute of an img tag."""
+    return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
 if __name__ == '__main__':
-    if cam is None:
-        print('MAKING NEW CAM')
-        #cam = webcam.VideoCamera()
-        cam = picam.VideoCamera()
-        # cam = files_cam.VideoCamera()
-        print('MADE NEW CAM')
-    app.run(host='0.0.0.0', debug=False)
+    app.run(host='0.0.0.0', threaded=True)
