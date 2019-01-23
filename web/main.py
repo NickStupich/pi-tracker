@@ -26,7 +26,7 @@ def index():
     
     shutterSpeedForm = ShutterSpeedForm()
     shutterSpeedForm.speed.data = Camera.shutter_speed_ms
-    #shutterSpeedForm.save.data = False
+    shutterSpeedForm.save.data = Camera.save_images
 
     return render_template('index.html', form = shutterSpeedForm)
 
