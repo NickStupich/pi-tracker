@@ -9,7 +9,8 @@ from wtforms import Form, StringField, TextField, validators, IntegerField, Floa
 if os.environ.get('CAMERA'):
     Camera = import_module('camera_' + os.environ['CAMERA']).Camera
 else:
-    from camera_pi import Camera
+    # from camera_pi import Camera
+    from camera import Camera
 
 # Raspberry Pi camera module (requires picamera package)
 # from camera_pi import Camera
@@ -19,7 +20,7 @@ app = Flask(__name__)
 
 class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
-    save = BooleanField('Save')#, validators=[validators.required()])
+    save = BooleanField('Save')
 
 @app.route('/')
 def index():
