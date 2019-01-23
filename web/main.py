@@ -3,7 +3,7 @@ from importlib import import_module
 import os
 from flask import Flask, render_template, Response, redirect, request
 
-from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField
+from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
 
 # import camera driver
 if os.environ.get('CAMERA'):
@@ -19,20 +19,24 @@ app = Flask(__name__)
 
 class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
-    
+    save = BooleanField('Save')#, validators=[validators.required()])
 
 @app.route('/')
 def index():
     
     shutterSpeedForm = ShutterSpeedForm()
-    shutterSpeedForm.speed.data = 10#cam.getShutterMicroseconds()
+    shutterSpeedForm.speed.data = Camera.shutter_speed_ms
+    #shutterSpeedForm.save.data = False
 
     return render_template('index.html', form = shutterSpeedForm)
 
 @app.route('/changeSettings', methods=['POST'])
 def changeSettings():
+    print('changeSettings()')
     newSpeed = int(request.form['speed'])
-    Camera.set_shutter_speed(newSpeed)
+    print(request.form)
+    save = (request.form['save'] == 'y') if 'save' in request.form else False
+    Camera.update_settings(newSpeed, save)
     return redirect('/')
 
 def gen(camera):

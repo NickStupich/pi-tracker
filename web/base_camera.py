@@ -58,6 +58,10 @@ class BaseCamera(object):
     event = CameraEvent()
 
     settings_changed = False
+    shutter_speed_ms = 100
+    resolution_x = 672
+    resolution_y = 496
+    save_images = False
 
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
@@ -89,21 +93,12 @@ class BaseCamera(object):
         raise RuntimeError('Must be implemented by subclasses.')
 
     @classmethod
-    def set_shutter_speed(cls, speed_ms):
-        print('settings shutter speed')
-        BaseCamera.shutter_speed = speed_ms * 1000
+    def update_settings(cls, speed_ms, save_images):
+        print('updating settings')
+        BaseCamera.shutter_speed_ms = speed_ms
+        BaseCamera.save_images = save_images
         BaseCamera.settings_changed = True
-        """
-        BaseCamera.thread.stop()
-    
-        # start background frame thread
-        BaseCamera.thread = threading.Thread(target=self._thread)
-        BaseCamera.thread.start()
 
-        # wait until frames are available
-        while self.get_frame() is None:
-            time.sleep(0)
-        """
 
     @classmethod
     def _thread(cls):

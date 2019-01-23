@@ -4,8 +4,11 @@ import picamera
 from base_camera import BaseCamera
 import numpy as np
 import cv2
+import os
+from datetime import datetime
 
 class Camera(BaseCamera):
+    images_directory = None
     
     #@staticmethod
     #def set_shutter_speed(ms):
@@ -15,19 +18,14 @@ class Camera(BaseCamera):
         count = 0
         with picamera.PiCamera() as camera:
             print('started picamera')
-            
-            #camera.resolution = (2592, 1952)
-            camera.resolution = (672, 496)
-            camera.shutter_speed = 10000
-            
+
+            update_cam_params(BaseCamera, camera)
             # let camera warm up
             time.sleep(2)
             
             while 1:
-                print(BaseCamera.settings_changed)
                 if(BaseCamera.settings_changed):
-                    camera.shutter_speed = BaseCamera.shutter_speed
-                    
+                    update_cam_params(BaseCamera, camera)
                     BaseCamera.settings_changed = False
                     
                 #print(self.shutter_speed)
@@ -36,20 +34,27 @@ class Camera(BaseCamera):
                 image_bw = image_rgb[:, :, 0]
                 
                 ret, jpeg = cv2.imencode('.jpg', image_bw)
+                
+                if BaseCamera.save_images:
+                    if images_directory is None:
+                        images_directory = os.path.join('/home/pi/projects/pi-tracker/web/images', datetime.now().strftime("%Y-%m-%d.%H:%M:%S"))
+                        os.mkdir(images_directory)
+                        
+                    filename = os.path.join(images_directory, '%s.jpg' % count)
+                    f = open(filename, 'wb')
+                    f.write(jpeg.tobytes())
+                    f.close()
+                    
+                else:
+                    images_directory = None #force to make a new folder next time
+                
+                
+                count += 1
                 yield jpeg.tobytes()
                 
             
-            """
-            stream = io.BytesIO()
-            for _ in camera.capture_continuous(stream, 'jpeg',
-                                                 use_video_port=True):
-                # return current frame
-                stream.seek(0)
-                print('new frame', count)
-                count += 1
-                yield stream.read()
-
-                # reset stream for next frame
-                stream.seek(0)
-                stream.truncate()
-            """
+def update_cam_params(BaseCamera, camera):
+    print('setting camera parameters')
+    camera.resolution = (BaseCamera.resolution_x, BaseCamera.resolution_y)
+    camera.framerate = 1000 // BaseCamera.shutter_speed_ms
+    camera.shutter_speed = BaseCamera.shutter_speed_ms * 1000
