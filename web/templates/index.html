@@ -4,19 +4,26 @@
   </head>
   <body>
   
-  <form action="/changeSettings" method="post">
-            {{ form.csrf }}
-<div class="input text">
-                {{ form.speed.label }} {{ form.speed }}</div>
-<div class="checkbox">
-        {{ form.save.label }} {{ form.save }} </div>
-        
-<div class="input submit">
-                <input type="submit" value="Update"></div>
-</form>
-  
-    <h1>Video Streaming Demonstration</h1>
-    <img src="{{ url_for('video_feed') }}">
+  <div style="width:100%">
+  <div style='width:400px; float:left'>
+	<form action="/changeSettings" method="post">
+	            {{ form.csrf }}
+	<div class="input text">
+	                {{ form.speed.label }} {{ form.speed }}</div>
+	<div class="checkbox">
+	        {{ form.save.label }} {{ form.save }} </div>
+	        
+	<div class="input submit">
+	                <input type="submit" value="Update"></div>
+	</form>
+  </div>
+  <div style='margin-left:404px'>
     <img src="{{ url_for('subimg_video_feed') }}">
+  </div>
+</div>
+  
+  <div style="margin-top:10px; width:100%">
+    <img src="{{ url_for('video_feed') }}">
+</div>
   </body>
 </html>

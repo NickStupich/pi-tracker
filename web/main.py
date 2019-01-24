@@ -52,7 +52,7 @@ def gen(camera_func):
 def video_feed():
     
     cam = Camera()
-    return Response(gen(cam.get_subimg_frame),
+    return Response(gen(cam.get_frame),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/subimg_video_feed')
@@ -61,7 +61,7 @@ def subimg_video_feed():
     cam = Camera()
     cam.start_tracking() #move to being controlled by web page
 
-    return Response(gen(cam.get_frame),
+    return Response(gen(cam.get_subimg_frame),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
