@@ -3,31 +3,42 @@ from base_camera import BaseCamera
 import os
 import cv2
 
-class Camera(BaseCamera):
-    """An emulated camera implementation that streams a repeated sequence of
-    files 1.jpg, 2.jpg and 3.jpg at a rate of one frame per second."""
-    # imgs = [open(f + '.jpg', 'rb').read() for f in ['1', '2', '3']]
+base_shutter_speed = 100
 
+def load_image(filename):
+	# print('loading ', filename)
+	result = cv2.imread(filename, 0)
+
+	result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
+
+	return result
+
+class Camera(BaseCamera):
 
     @staticmethod
     def frames():
 
         folder = 'F:/star_guiding/test_frames'
-        filenames = list(filter(lambda s: s.startswith('IMG'), os.listdir(folder)))[:5]
-        imgs = [cv2.imread(os.path.join(folder, file), 0) for file in filenames]
-        # print(len(imgs), imgs[0].shape)
+        filenames = list(map(lambda s2: os.path.join(folder, s2), filter(lambda s: s.startswith('IMG'), os.listdir(folder))))
+        imgs = [None for file in filenames]
+
         count = 0
         while True:
-            time.sleep(1)
-            # yield Camera.imgs[int(time.time()) % 3]
+            # time.sleep(1)
+
             index = count % len(imgs)
             if (count // len(imgs)) % 2 > 0: #flip around backwards for continuity
                 index = len(imgs) - index - 1
-            # print(count, len(imgs), index)
+
+            if imgs[index] is None:
+            	imgs[index] = load_image(filenames[index])
 
             img = imgs[index]
             count += 1
 
-            ret, jpg = cv2.imencode('.jpg', img)
-            # print(img.shape, img.dtype, jpg.shape)
-            yield jpg.tobytes()
+            if BaseCamera.shutter_speed_ms != base_shutter_speed:
+            	img = img * BaseCamera.shutter_speed_ms / base_shutter_speed
+
+            print('camera returning frame')
+
+            yield img

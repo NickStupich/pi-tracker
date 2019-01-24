@@ -10,9 +10,6 @@ from datetime import datetime
 class Camera(BaseCamera):
     images_directory = None
     
-    #@staticmethod
-    #def set_shutter_speed(ms):
-         
     @staticmethod
     def frames():
         count = 0
@@ -28,12 +25,10 @@ class Camera(BaseCamera):
                     update_cam_params(BaseCamera, camera)
                     BaseCamera.settings_changed = False
                     
-                #print(self.shutter_speed)
                 image_rgb = np.empty((camera.resolution[1], camera.resolution[0], 3), dtype=np.uint8)
                 camera.capture(image_rgb, 'rgb')
                 image_bw = image_rgb[:, :, 0]
                 
-                ret, jpeg = cv2.imencode('.jpg', image_bw)
                 
                 if BaseCamera.save_images:
                     if images_directory is None:
@@ -41,16 +36,17 @@ class Camera(BaseCamera):
                         os.mkdir(images_directory)
                         
                     filename = os.path.join(images_directory, '%s.jpg' % count)
-                    f = open(filename, 'wb')
-                    f.write(jpeg.tobytes())
-                    f.close()
-                    
+                    # f = open(filename, 'wb')
+                    # f.write(jpeg.tobytes())
+                    # f.close()
+                    cv2.imwrite(filename, image_bw)
+
                 else:
                     images_directory = None #force to make a new folder next time
                 
                 
                 count += 1
-                yield jpeg.tobytes()
+                yield image_bw
                 
             
 def update_cam_params(BaseCamera, camera):

@@ -1,5 +1,6 @@
 import time
 import threading
+import cv2
 try:
     from greenlet import getcurrent as get_ident
 except ImportError:
@@ -50,7 +51,6 @@ class CameraEvent(object):
         """Invoked from each client's thread after a frame was processed."""
         self.events[get_ident()][0].clear()
 
-
 class BaseCamera(object):
     thread = None  # background thread that reads frames from camera
     frame = None  # current frame is stored here by background thread
@@ -84,7 +84,12 @@ class BaseCamera(object):
         BaseCamera.event.wait()
         BaseCamera.event.clear()
 
-        return BaseCamera.frame
+        frame = BaseCamera.frame
+
+        ret, jpeg = cv2.imencode('.jpg', frame)
+        print('thread to web')
+
+        return jpeg.tobytes()
     
 
     @staticmethod
@@ -107,6 +112,7 @@ class BaseCamera(object):
         frames_iterator = cls.frames()
         for frame in frames_iterator:
             BaseCamera.frame = frame
+            print('frame in _thread')
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
 
@@ -116,8 +122,5 @@ class BaseCamera(object):
                 frames_iterator.close()
                 print('Stopping camera thread due to inactivity.')
                 break
-            
-            if BaseCamera.settings_changed:
-                print('settings changed, need to restart')
-                
+                            
         BaseCamera.thread = None
