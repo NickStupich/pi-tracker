@@ -40,10 +40,10 @@ def changeSettings():
     Camera.update_settings(newSpeed, save)
     return redirect('/')
 
-def gen(camera):
+def gen(camera_func):
     """Video streaming generator function."""
     while True:
-        frame = camera.get_frame()
+        frame = camera_func()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
@@ -52,9 +52,16 @@ def gen(camera):
 def video_feed():
     
     cam = Camera()
+    return Response(gen(cam.get_subimg_frame),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/subimg_video_feed')
+def subimg_video_feed():
+    
+    cam = Camera()
     cam.start_tracking() #move to being controlled by web page
 
-    return Response(gen(cam),
+    return Response(gen(cam.get_frame),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 

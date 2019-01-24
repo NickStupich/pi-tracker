@@ -9,7 +9,8 @@ def load_image(filename):
 	print('loading ', filename)
 	result = cv2.imread(filename, 0)
 
-	result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
+	f_ratio = 0.2
+	result = cv2.resize(result, None, fx = f_ratio, fy = f_ratio)
 
 	return result
 

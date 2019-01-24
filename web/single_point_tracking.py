@@ -28,32 +28,22 @@ def get_start_position2(img, percentile = 90):
 	stars_img_adaptive = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, -threshold_value) / 255
 
 	img_masked = img * stars_img_adaptive
-
-	# plt.imshow(img_masked); plt.show()
-
 	result = get_start_position(img_masked)
 	return result
 
+def get_current_star_location(img, last_position, search_half_size = 50):
+	blur_size = 11
 
-half_range = 50
-blur_size = 11
-def get_current_star_location(img, last_position):
-
-	global half_range
 	global blur_size
 
-	sub_img = img[int(last_position[1]) - half_range:int(last_position[1]) + half_range, int(last_position[0]) - half_range : int(last_position[0]) + half_range]
+	sub_img = img[int(last_position[1]) - search_half_size:int(last_position[1]) + search_half_size, int(last_position[0]) - search_half_size : int(last_position[0]) + search_half_size]
 	blurred_sub_img = cv2.GaussianBlur(sub_img, (blur_size, blur_size), 0)
 
 	max_loc = np.argmax(blurred_sub_img)
 	(minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
-	# print(maxLoc)
-	# plt.imshow(sub_img); plt.show()
-	# plt.imshow(blurred_sub_img); plt.plot([maxLoc[0]], [maxLoc[1]], 'or'); plt.show()
-
 
 	#todo: refine this
-	current_position = (maxLoc[0] + (last_position[0] - half_range), maxLoc[1] + (last_position[1] - half_range))
+	current_position = (maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size))
 
 	return current_position
 
@@ -84,4 +74,4 @@ class SinglePointTracking():
 		# print(current_location, self.last_coords)
 		self.last_coords = current_location
 		shift = (current_location[0] - self.starting_coords[0], current_location[1] - self.starting_coords[1])
-		return shift
+		return current_location, shift

@@ -58,6 +58,7 @@ class BaseCamera(object):
     frame = None  # current frame is stored here by background thread
     last_access = 0  # time of last client access to the camera
     event = CameraEvent()
+    subimg_event = CameraEvent()
 
     settings_changed = False
     shutter_speed_ms = 100
@@ -93,6 +94,14 @@ class BaseCamera(object):
         # print('thread to web')
 
         return jpeg.tobytes()
+
+    def get_subimg_frame(self):
+        BaseCamera.subimg_event.wait()
+        BaseCamera.subimg_event.clear()
+        img = BaseCamera.sub_img
+
+        ret, jpeg = cv2.imencode('.jpg', img)
+        return jpeg.tobytes()
     
     def start_tracking(self):
         BaseCamera.tracking_enabled = True
@@ -125,18 +134,22 @@ class BaseCamera(object):
                 if not tracker.is_tracking():
                     tracker.start_tracking(frame)
                 else:
-                    pos = tracker.process_frame(frame)
+                    pos, shift = tracker.process_frame(frame)
                     print('relative position: ', pos)
 
-            # print('frame in _thread')
+                    n = 50
+                    BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
+                    BaseCamera.subimg_event.set()
+
+
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
 
             # if there hasn't been any clients asking for frames in
             # the last 10 seconds then stop the thread
-            if time.time() - BaseCamera.last_access > 10 and False:
-                frames_iterator.close()
-                print('Stopping camera thread due to inactivity.')
-                break
+            # if time.time() - BaseCamera.last_access > 10 and False:
+            #     frames_iterator.close()
+            #     print('Stopping camera thread due to inactivity.')
+            #     break
                             
         BaseCamera.thread = None
