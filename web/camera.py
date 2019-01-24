@@ -6,7 +6,7 @@ import cv2
 base_shutter_speed = 100
 
 def load_image(filename):
-	# print('loading ', filename)
+	print('loading ', filename)
 	result = cv2.imread(filename, 0)
 
 	result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
@@ -39,6 +39,6 @@ class Camera(BaseCamera):
             if BaseCamera.shutter_speed_ms != base_shutter_speed:
             	img = img * BaseCamera.shutter_speed_ms / base_shutter_speed
 
-            print('camera returning frame')
+            # print('camera returning frame')
 
             yield img

@@ -10,6 +10,8 @@ except ImportError:
         from _thread import get_ident
 
 
+from single_point_tracking import SinglePointTracking
+
 class CameraEvent(object):
     """An Event-like class that signals all active clients when a new frame is
     available.
@@ -62,6 +64,7 @@ class BaseCamera(object):
     resolution_x = 672
     resolution_y = 496
     save_images = False
+    tracking_enabled = False
 
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
@@ -87,10 +90,12 @@ class BaseCamera(object):
         frame = BaseCamera.frame
 
         ret, jpeg = cv2.imencode('.jpg', frame)
-        print('thread to web')
+        # print('thread to web')
 
         return jpeg.tobytes()
     
+    def start_tracking(self):
+        BaseCamera.tracking_enabled = True
 
     @staticmethod
     def frames():
@@ -108,11 +113,22 @@ class BaseCamera(object):
     @classmethod
     def _thread(cls):
         """Camera background thread."""
+
+        tracker = SinglePointTracking()
+
         print('Starting camera thread.')
         frames_iterator = cls.frames()
         for frame in frames_iterator:
             BaseCamera.frame = frame
-            print('frame in _thread')
+
+            if BaseCamera.tracking_enabled:
+                if not tracker.is_tracking():
+                    tracker.start_tracking(frame)
+                else:
+                    pos = tracker.process_frame(frame)
+                    print('relative position: ', pos)
+
+            # print('frame in _thread')
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
 

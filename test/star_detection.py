@@ -2,49 +2,50 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import sys
 
-half_range = 50
-blur_size = 11
-
-
-
-def get_current_star_location(img, last_position):
-
-	global half_range
-	global blur_size
-
-	sub_img = img[int(last_position[1]) - half_range:int(last_position[1]) + half_range, int(last_position[0]) - half_range : int(last_position[0]) + half_range]
-	blurred_sub_img = cv2.GaussianBlur(sub_img, (blur_size, blur_size), 0)
-
-	max_loc = np.argmax(blurred_sub_img)
-	(minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
-	# print(maxLoc)
-	# plt.imshow(sub_img); plt.show()
-	# plt.imshow(blurred_sub_img); plt.plot([maxLoc[0]], [maxLoc[1]], 'or'); plt.show()
+sys.path.append('..')
+from web import single_point_tracking
 
 
-	#todo: refine this
-	current_position = (maxLoc[0] + (last_position[0] - half_range), maxLoc[1] + (last_position[1] - half_range))
+fx = fy = 0.25
+def load_image(filename):
+	# print('loading ', filename)
+	result = cv2.imread(filename, 0)
 
-	return current_position
+	result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
+	# print(result.shape, result.dtype)
+
+	return result
+
 
 def main():
-	folder = "D:/astro_exports/star_guiding/test_frames"
+	folder = "F:/star_guiding/test_frames"
 
-	start_position = 	(2914, 2378)
+	# start_position = 	(2914, 2378)
+
+	start_position = single_point_tracking.get_start_position2(load_image(os.path.join(folder, 'IMG_7955.jpg')))
+
 
 	last_position = start_position
 
 	all_positions = []
 
-	for fn in os.listdir(folder):#[:10]:
+	for fn in filter(lambda s: s.startswith('IMG'), os.listdir(folder)):#[:10]:
+		# print(fn)
 		full_fn = os.path.join(folder, fn)
-		img = cv2.imread(full_fn, 0)
+		img = load_image(full_fn)
 		# print(img.shape)
 
-		current_position = get_current_star_location(img, last_position)
-
+		current_position = single_point_tracking.get_current_star_location(img, last_position)
+		# current_position = start_position
 		print(current_position)
+		n = 50
+		sub_img = img[current_position[1] - n: current_position[1] + n, current_position[0] - n:current_position[0]+n]
+		plt.imshow(sub_img); plt.title(fn); plt.show()
+		
+		# plt.imshow(img)
+		# plt.show()
 
 
 		last_position = current_position

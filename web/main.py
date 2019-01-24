@@ -51,9 +51,10 @@ def gen(camera):
 @app.route('/video_feed')
 def video_feed():
     
-    #Camera.set_shutter_speed(500)
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen(Camera()),
+    cam = Camera()
+    cam.start_tracking() #move to being controlled by web page
+
+    return Response(gen(cam),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
