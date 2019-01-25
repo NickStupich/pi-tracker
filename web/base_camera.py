@@ -71,6 +71,7 @@ class BaseCamera(object):
     restart_tracking = True
     tracking_overlay_enabled = True
     tracking_sub_img_half_size = 50
+    overlay_tracking_history = False
 
 
     def __init__(self):
@@ -105,8 +106,9 @@ class BaseCamera(object):
         frame = BaseCamera.frame
 
         if BaseCamera.visual_gain != 1:
-            frame = frame * BaseCamera.visual_gain
-
+            #frame = frame * BaseCamera.visual_gain
+            frame = np.clip(frame, 0, 255 / BaseCamera.visual_gain) * BaseCamera.visual_gain
+            
         ret, jpeg = cv2.imencode('.jpg', frame)
         # print('thread to web')
 
@@ -135,13 +137,13 @@ class BaseCamera(object):
         raise RuntimeError('Must be implemented by subclasses.')
 
     @classmethod
-    def update_settings(cls, speed_ms, newVisualGain, save_images):
+    def update_settings(cls, speed_ms, newVisualGain, save_images, overlay_tracking_history):
         print('updating settings')
         BaseCamera.shutter_speed_ms = speed_ms
         BaseCamera.save_images = save_images
         BaseCamera.settings_changed = True
         BaseCamera.visual_gain = newVisualGain
-
+        BaseCamera.overlay_tracking_history = overlay_tracking_history
 
     @classmethod
     def _thread(cls):
@@ -166,7 +168,7 @@ class BaseCamera(object):
                     BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
 
                     if BaseCamera.tracking_overlay_enabled:
-                        tracker.overlay_tracking_information(frame)
+                        tracker.overlay_tracking_information(frame, BaseCamera.overlay_tracking_history)
             
             #even if tracking not enabled we'll broadcast an empty fixed img.
             BaseCamera.subimg_event.set()

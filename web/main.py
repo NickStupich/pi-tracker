@@ -9,8 +9,8 @@ from wtforms import Form, StringField, TextField, validators, IntegerField, Floa
 if os.environ.get('CAMERA'):
     Camera = import_module('camera_' + os.environ['CAMERA']).Camera
 else:
-    # from camera_pi import Camera
-    from camera import Camera
+    from camera_pi import Camera
+    #from camera import Camera
 
 # Raspberry Pi camera module (requires picamera package)
 # from camera_pi import Camera
@@ -22,6 +22,7 @@ class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
     save = BooleanField('Save')
     visual_gain = IntegerField('Visual Gain:')
+    overlay_tracking_history = BooleanField('Overlay tracking history')
 
 @app.route('/')
 def index():
@@ -30,6 +31,7 @@ def index():
     shutterSpeedForm.speed.data = Camera.shutter_speed_ms
     shutterSpeedForm.save.data = Camera.save_images
     shutterSpeedForm.visual_gain.data = Camera.visual_gain
+    shutterSpeedForm.overlay_tracking_history.data = Camera.overlay_tracking_history
 
     return render_template('index.html', camSettingsForm = shutterSpeedForm)
 
@@ -39,7 +41,8 @@ def changeSettings():
     newSpeed = int(request.form['speed'])
     newVisualGain = int(request.form['visual_gain'])
     save = (request.form['save'] == 'y') if 'save' in request.form else False
-    Camera.update_settings(newSpeed, newVisualGain, save)
+    overlay_tracking_history = (request.form['overlay_tracking_history'] == 'y') if 'overlay_tracking_history' in request.form else False
+    Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history)
     return redirect('/')
 
 @app.route('/startRestartTracking', methods=['POST'])

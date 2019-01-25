@@ -27,7 +27,7 @@ class Camera(BaseCamera):
                     
                 image_rgb = np.empty((camera.resolution[1], camera.resolution[0], 3), dtype=np.uint8)
                 camera.capture(image_rgb, 'rgb')
-                image_bw = image_rgb[:, :, 0]
+                image_bw = np.copy(image_rgb[:, :, 0])
                 
                 
                 if BaseCamera.save_images:
@@ -49,5 +49,5 @@ class Camera(BaseCamera):
 def update_cam_params(BaseCamera, camera):
     print('setting camera parameters')
     camera.resolution = (BaseCamera.resolution_x, BaseCamera.resolution_y)
-    camera.framerate = 1000 // BaseCamera.shutter_speed_ms
+    camera.framerate = min(10, 1000 // BaseCamera.shutter_speed_ms)
     camera.shutter_speed = BaseCamera.shutter_speed_ms * 1000
