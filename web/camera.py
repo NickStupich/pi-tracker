@@ -6,7 +6,7 @@ import cv2
 base_shutter_speed = 100
 
 def load_image(filename):
-	print('loading ', filename)
+	# print('loading ', filename)
 	result = cv2.imread(filename, 0)
 
 	f_ratio = 0.2
@@ -25,7 +25,7 @@ class Camera(BaseCamera):
 
         count = 0
         while True:
-            # time.sleep(1)
+            time.sleep(1)
 
             index = count % len(imgs)
             if (count // len(imgs)) % 2 > 0: #flip around backwards for continuity

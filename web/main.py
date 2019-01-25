@@ -29,7 +29,7 @@ def index():
     shutterSpeedForm.speed.data = Camera.shutter_speed_ms
     shutterSpeedForm.save.data = Camera.save_images
 
-    return render_template('index.html', form = shutterSpeedForm)
+    return render_template('index.html', camSettingsForm = shutterSpeedForm)
 
 @app.route('/changeSettings', methods=['POST'])
 def changeSettings():
@@ -39,6 +39,20 @@ def changeSettings():
     save = (request.form['save'] == 'y') if 'save' in request.form else False
     Camera.update_settings(newSpeed, save)
     return redirect('/')
+
+@app.route('/startRestartTracking', methods=['POST'])
+def startRestartTracking():
+    cam = Camera()
+    cam.start_tracking() 
+    return redirect('/')
+
+
+@app.route('/stopTracking', methods=['POST'])
+def stopTracking():
+    cam = Camera()
+    cam.stop_tracking() 
+    return redirect('/')
+
 
 def gen(camera_func):
     """Video streaming generator function."""
@@ -59,7 +73,6 @@ def video_feed():
 def subimg_video_feed():
     
     cam = Camera()
-    cam.start_tracking() #move to being controlled by web page
 
     return Response(gen(cam.get_subimg_frame),
                     mimetype='multipart/x-mixed-replace; boundary=frame')

@@ -7,15 +7,28 @@
   <div style="width:100%">
   <div style='width:400px; float:left'>
 	<form action="/changeSettings" method="post">
-	            {{ form.csrf }}
+	            {{ camSettingsForm.csrf }}
 	<div class="input text">
-	                {{ form.speed.label }} {{ form.speed }}</div>
+	                {{ camSettingsForm.speed.label }} {{ camSettingsForm.speed }}</div>
 	<div class="checkbox">
-	        {{ form.save.label }} {{ form.save }} </div>
+	        {{ camSettingsForm.save.label }} {{ camSettingsForm.save }} </div>
 	        
 	<div class="input submit">
 	                <input type="submit" value="Update"></div>
 	</form>
+
+	
+	<form action="/startRestartTracking" method="post">
+			<div class="input submit">
+				<input type="submit" value= "Start/Restart Tracking" ></div>
+	</form>
+
+	<form action="/stopTracking" method="post">
+			<div class="input submit">
+				<input type="submit" value= "Stop Tracking" ></div>
+	</form>
+
+
   </div>
   <div style='margin-left:404px'>
     <img src="{{ url_for('subimg_video_feed') }}">

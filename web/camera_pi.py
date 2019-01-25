@@ -36,9 +36,6 @@ class Camera(BaseCamera):
                         os.mkdir(images_directory)
                         
                     filename = os.path.join(images_directory, '%s.jpg' % count)
-                    # f = open(filename, 'wb')
-                    # f.write(jpeg.tobytes())
-                    # f.close()
                     cv2.imwrite(filename, image_bw)
 
                 else:

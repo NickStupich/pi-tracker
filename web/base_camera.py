@@ -1,6 +1,7 @@
 import time
 import threading
 import cv2
+import numpy as np
 try:
     from greenlet import getcurrent as get_ident
 except ImportError:
@@ -19,7 +20,7 @@ class CameraEvent(object):
     def __init__(self):
         self.events = {}
 
-    def wait(self):
+    def wait(self, timeout = None):
         """Invoked from each client's thread to wait for the next frame."""
         ident = get_ident()
         if ident not in self.events:
@@ -27,7 +28,7 @@ class CameraEvent(object):
             # add an entry for it in the self.events dict
             # each entry has two elements, a threading.Event() and a timestamp
             self.events[ident] = [threading.Event(), time.time()]
-        return self.events[ident][0].wait()
+        return self.events[ident][0].wait(timeout)
 
     def set(self):
         """Invoked by the camera thread when a new frame is available."""
@@ -66,8 +67,11 @@ class BaseCamera(object):
     resolution_y = 496
     save_images = False
     tracking_enabled = False
+    restart_tracking = True
 
     def __init__(self):
+
+        BaseCamera.sub_img = self.get_non_tracking_subimage()
         """Start the background camera thread if it isn't running yet."""
         if BaseCamera.thread is None:
             BaseCamera.last_access = time.time()
@@ -79,6 +83,12 @@ class BaseCamera(object):
             # wait until frames are available
             while self.get_frame() is None:
                 time.sleep(0)
+
+    def get_non_tracking_subimage(self):
+
+        sub_img_half_size = 50
+        sub_img = np.ones((sub_img_half_size*2, sub_img_half_size*2), np.uint8) * 128
+        return sub_img
 
     def get_frame(self):
         """Return the current camera frame."""
@@ -99,12 +109,21 @@ class BaseCamera(object):
         BaseCamera.subimg_event.wait()
         BaseCamera.subimg_event.clear()
         img = BaseCamera.sub_img
-
+        print('got subimg_frame')
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
     
     def start_tracking(self):
+        BaseCamera.restart_tracking = True
         BaseCamera.tracking_enabled = True
+
+    def stop_tracking(self):
+        BaseCamera.tracking_enabled = False
+        print('stop_tracking()')
+        BaseCamera.subimg_event.wait(timeout = 2)
+        print('stop_tracking() after')
+        BaseCamera.sub_img = self.get_non_tracking_subimage()
+        BaseCamera.subimg_event.set()
 
     @staticmethod
     def frames():
@@ -130,18 +149,20 @@ class BaseCamera(object):
         for frame in frames_iterator:
             BaseCamera.frame = frame
 
+            sub_img_half_size = 50
             if BaseCamera.tracking_enabled:
-                if not tracker.is_tracking():
-                    tracker.start_tracking(frame)
+                if not tracker.is_tracking() or BaseCamera.restart_tracking:
+                    tracker.restart_tracking(frame)
+                    BaseCamera.restart_tracking = False
                 else:
                     pos, shift = tracker.process_frame(frame)
                     print('relative position: ', pos)
 
-                    n = 50
-                    BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
-                    BaseCamera.subimg_event.set()
-
-
+                    BaseCamera.sub_img = frame[pos[1] - sub_img_half_size:pos[1]+sub_img_half_size, pos[0]-sub_img_half_size:pos[0]+sub_img_half_size]
+            
+            #even if tracking not enabled we'll broadcast an empty fixed img.
+            BaseCamera.subimg_event.set()
+            
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
 

@@ -54,7 +54,7 @@ class SinglePointTracking():
 	def __init__(self):
 		print('created tracker object')
 
-	def start_tracking(self, base_frame, starting_coords = None):
+	def restart_tracking(self, base_frame, starting_coords = None):
 		print('start tracking()')
 
 		self.base_frame = base_frame
