@@ -63,11 +63,15 @@ class BaseCamera(object):
 
     settings_changed = False
     shutter_speed_ms = 100
+    visual_gain = 1
     resolution_x = 672
     resolution_y = 496
     save_images = False
     tracking_enabled = False
     restart_tracking = True
+    tracking_overlay_enabled = True
+    tracking_sub_img_half_size = 50
+
 
     def __init__(self):
 
@@ -100,6 +104,9 @@ class BaseCamera(object):
 
         frame = BaseCamera.frame
 
+        if BaseCamera.visual_gain != 1:
+            frame = frame * BaseCamera.visual_gain
+
         ret, jpeg = cv2.imencode('.jpg', frame)
         # print('thread to web')
 
@@ -109,7 +116,6 @@ class BaseCamera(object):
         BaseCamera.subimg_event.wait()
         BaseCamera.subimg_event.clear()
         img = BaseCamera.sub_img
-        print('got subimg_frame')
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
     
@@ -119,9 +125,7 @@ class BaseCamera(object):
 
     def stop_tracking(self):
         BaseCamera.tracking_enabled = False
-        print('stop_tracking()')
         BaseCamera.subimg_event.wait(timeout = 2)
-        print('stop_tracking() after')
         BaseCamera.sub_img = self.get_non_tracking_subimage()
         BaseCamera.subimg_event.set()
 
@@ -131,46 +135,43 @@ class BaseCamera(object):
         raise RuntimeError('Must be implemented by subclasses.')
 
     @classmethod
-    def update_settings(cls, speed_ms, save_images):
+    def update_settings(cls, speed_ms, newVisualGain, save_images):
         print('updating settings')
         BaseCamera.shutter_speed_ms = speed_ms
         BaseCamera.save_images = save_images
         BaseCamera.settings_changed = True
+        BaseCamera.visual_gain = newVisualGain
 
 
     @classmethod
     def _thread(cls):
         """Camera background thread."""
 
-        tracker = SinglePointTracking()
+        tracker = SinglePointTracking(BaseCamera.tracking_sub_img_half_size)
 
         print('Starting camera thread.')
         frames_iterator = cls.frames()
         for frame in frames_iterator:
             BaseCamera.frame = frame
 
-            sub_img_half_size = 50
             if BaseCamera.tracking_enabled:
                 if not tracker.is_tracking() or BaseCamera.restart_tracking:
                     tracker.restart_tracking(frame)
                     BaseCamera.restart_tracking = False
                 else:
                     pos, shift = tracker.process_frame(frame)
-                    print('relative position: ', pos)
+                    print('relative position: ', pos, shift)
 
-                    BaseCamera.sub_img = frame[pos[1] - sub_img_half_size:pos[1]+sub_img_half_size, pos[0]-sub_img_half_size:pos[0]+sub_img_half_size]
+                    n = BaseCamera.tracking_sub_img_half_size = 50 
+                    BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
+
+                    if BaseCamera.tracking_overlay_enabled:
+                        tracker.overlay_tracking_information(frame)
             
             #even if tracking not enabled we'll broadcast an empty fixed img.
             BaseCamera.subimg_event.set()
             
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
-
-            # if there hasn't been any clients asking for frames in
-            # the last 10 seconds then stop the thread
-            # if time.time() - BaseCamera.last_access > 10 and False:
-            #     frames_iterator.close()
-            #     print('Stopping camera thread due to inactivity.')
-            #     break
                             
         BaseCamera.thread = None

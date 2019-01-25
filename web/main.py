@@ -21,6 +21,7 @@ app = Flask(__name__)
 class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
     save = BooleanField('Save')
+    visual_gain = IntegerField('Visual Gain:')
 
 @app.route('/')
 def index():
@@ -28,6 +29,7 @@ def index():
     shutterSpeedForm = ShutterSpeedForm()
     shutterSpeedForm.speed.data = Camera.shutter_speed_ms
     shutterSpeedForm.save.data = Camera.save_images
+    shutterSpeedForm.visual_gain.data = Camera.visual_gain
 
     return render_template('index.html', camSettingsForm = shutterSpeedForm)
 
@@ -35,9 +37,9 @@ def index():
 def changeSettings():
     print('changeSettings()')
     newSpeed = int(request.form['speed'])
-    print(request.form)
+    newVisualGain = int(request.form['visual_gain'])
     save = (request.form['save'] == 'y') if 'save' in request.form else False
-    Camera.update_settings(newSpeed, save)
+    Camera.update_settings(newSpeed, newVisualGain, save)
     return redirect('/')
 
 @app.route('/startRestartTracking', methods=['POST'])

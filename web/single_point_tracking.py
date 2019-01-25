@@ -34,8 +34,6 @@ def get_start_position2(img, percentile = 90):
 def get_current_star_location(img, last_position, search_half_size = 50):
 	blur_size = 11
 
-	global blur_size
-
 	sub_img = img[int(last_position[1]) - search_half_size:int(last_position[1]) + search_half_size, int(last_position[0]) - search_half_size : int(last_position[0]) + search_half_size]
 	blurred_sub_img = cv2.GaussianBlur(sub_img, (blur_size, blur_size), 0)
 
@@ -51,12 +49,15 @@ class SinglePointTracking():
 	last_coords = None
 	_is_tracking = False
 
-	def __init__(self):
+	all_coords = []
+
+	def __init__(self, search_img_half_size):
 		print('created tracker object')
+		self.search_img_half_size = search_img_half_size
 
 	def restart_tracking(self, base_frame, starting_coords = None):
 		print('start tracking()')
-
+		self.all_coords = []
 		self.base_frame = base_frame
 
 		if starting_coords is None:
@@ -70,8 +71,13 @@ class SinglePointTracking():
 		return self._is_tracking
 
 	def process_frame(self, new_frame):
-		current_location = get_current_star_location(new_frame, self.last_coords)
+		current_location = get_current_star_location(new_frame, self.last_coords, self.search_img_half_size)
 		# print(current_location, self.last_coords)
 		self.last_coords = current_location
 		shift = (current_location[0] - self.starting_coords[0], current_location[1] - self.starting_coords[1])
+		self.all_coords.append(current_location)
 		return current_location, shift
+
+	def overlay_tracking_information(self, frame):
+		n = self.search_img_half_size
+		cv2.rectangle(frame, (self.last_coords[0] - n, self.last_coords[1] - n), (self.last_coords[0] + n, self.last_coords[1] + n), (255,))
