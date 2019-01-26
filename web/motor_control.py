@@ -3,9 +3,8 @@ import time
 import threading
 from datetime import datetime
 
-dir_pin = 2
 step_pin = 3
-microstep_pin = 4
+microstep_pin = 2
 
 """
 dir = LED(2)
@@ -55,11 +54,11 @@ class MotorControl(object):
 
     @classmethod
     def _thread(cls):
-        output_dir = LED(dir_pin)
+        #output_dir = LED(dir_pin)
         output_step = LED(step_pin)
         output_micro = LED(microstep_pin)
         
-        output_dir.off() #set the direction
+        #output_dir.off() #set the direction
         output_micro.on() #microstepping on
         
         degrees_per_second = 360. / (24 * 60 * 60)
