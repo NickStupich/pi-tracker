@@ -13,6 +13,7 @@ else:
     #from camera import Camera
     
 from motor_control import MotorControl
+from camera_adjuster import CameraAdjuster
 
 # Raspberry Pi camera module (requires picamera package)
 # from camera_pi import Camera
@@ -97,9 +98,20 @@ def enable_movement():
     mc.enable_movement()
     return redirect('/')
     
-
+@app.route('/start_following', methods=['POST'])
+def start_following():
+    ca = CameraAdjuster()
+    ca.start_following()
+    return redirect('/')
+    
+@app.route('/stop_following', methods=['POST'])
+def stop_following():
+    ca = CameraAdjuster()
+    ca.stop_following()
+    return redirect('/')
 
 if __name__ == '__main__':
     cam = Camera()
+    #ca = CameraAdjuster(cam)
     mc = MotorControl()
     app.run(host='0.0.0.0', threaded=True)

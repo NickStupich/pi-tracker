@@ -36,11 +36,12 @@ class MotorControl(object):
     
     def __init__(self):
         if MotorControl.thread is None:
-            print('thread is none')
+            #print('thread is none')
             MotorControl.thread = threading.Thread(target=self._thread)
             MotorControl.thread.start()
         else:
-            print('thread isnt None')
+            #print('thread isnt None')
+            pass
             
     def kill(self):
         MotorControl._kill = True
@@ -51,6 +52,9 @@ class MotorControl(object):
         
     def disable_movement(self):
         MotorControl._movement_enabled = False
+
+    def set_tracking_factor(self, factor):
+        MotorControl.tracking_factor = factor
 
     @classmethod
     def _thread(cls):
