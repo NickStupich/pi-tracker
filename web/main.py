@@ -11,6 +11,8 @@ if os.environ.get('CAMERA'):
 else:
     from camera_pi import Camera
     #from camera import Camera
+    
+from motor_control import MotorControl
 
 # Raspberry Pi camera module (requires picamera package)
 # from camera_pi import Camera
@@ -84,4 +86,6 @@ def subimg_video_feed():
 
 
 if __name__ == '__main__':
+    cam = Camera()
+    mc = MotorControl()
     app.run(host='0.0.0.0', threaded=True)
