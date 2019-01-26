@@ -84,6 +84,20 @@ def subimg_video_feed():
     return Response(gen(cam.get_subimg_frame),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/disable_movement', methods=['POST'])
+def disable_movement():
+    mc = MotorControl()
+    mc.disable_movement()
+    return redirect('/')
+    
+
+@app.route('/enable_movement', methods=['POST'])
+def enable_movement():
+    mc = MotorControl()
+    mc.enable_movement()
+    return redirect('/')
+    
+
 
 if __name__ == '__main__':
     cam = Camera()

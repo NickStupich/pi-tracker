@@ -25,12 +25,15 @@ def busy_sleep_us(us, offset_us = 34):
             break
         
 sleep_us = lambda us: time.sleep(us / 1E6)
+#sleep_us = busy_sleep_us
 
 class MotorControl(object):
     thread = None
     adjustment_factor = 1.0
     tracking_factor = 1.0
     _kill = False
+    _movement_enabled = True
+    _restart_movement = False
     
     def __init__(self):
         if MotorControl.thread is None:
@@ -42,6 +45,13 @@ class MotorControl(object):
             
     def kill(self):
         MotorControl._kill = True
+        
+    def enable_movement(self):
+        MotorControl._restart_movement = True
+        #MotorControl._movement_enabled = True
+        
+    def disable_movement(self):
+        MotorControl._movement_enabled = False
 
     @classmethod
     def _thread(cls):
@@ -68,25 +78,35 @@ class MotorControl(object):
         sleep_us(current_delay_us); #just to start from having a big offset at the start
         i=0
         while(not MotorControl._kill):
-            current_timestamp = datetime.now()
-            delta = current_timestamp - last_timestamp
-            elapsed_us = delta.seconds * 1E6 + delta.microseconds
-            
-            error_us = elapsed_us - current_delay_us
-            error_integral_us += error_us
-            
-            if i % 1000 == 0: print(error_integral_us)
-            
-            current_delay_us = calculated_delay_us * MotorControl.adjustment_factor * MotorControl.tracking_factor
-            
-            current_delay_minus_error_us = current_delay_us - error_integral_us
-            if current_delay_minus_error_us < 500: current_delay_minus_error_us = 500 #cant go <0, also need the stepper to move in time
-            sleep_us(current_delay_minus_error_us)
-            
-            last_timestamp = current_timestamp
-            output_step.value = not output_step.value
-            
-            i+=1
+            if MotorControl._movement_enabled:
+                current_timestamp = datetime.now()
+                delta = current_timestamp - last_timestamp
+                elapsed_us = delta.seconds * 1E6 + delta.microseconds
+                
+                error_us = elapsed_us - current_delay_us
+                error_integral_us += error_us
+                
+                if i % 1000 == 0: print(error_integral_us)
+                
+                current_delay_us = calculated_delay_us * MotorControl.adjustment_factor * MotorControl.tracking_factor
+                
+                current_delay_minus_error_us = current_delay_us - error_integral_us
+                if current_delay_minus_error_us < 1000: current_delay_minus_error_us = 1000 #cant go <0, also need the stepper to move in time
+                sleep_us(current_delay_minus_error_us)
+                
+                last_timestamp = current_timestamp
+                output_step.value = not output_step.value
+                
+                i+=1
+            elif MotorControl._restart_movement:
+                i = 0
+                error_integral_us
+                last_timestamp = datetime.now()
+                MotorControl._restart_movement = False
+                MotorControl._movement_enabled = True
+                sleep_us(current_delay_us)
+            else:
+                time.sleep(1)
             
             
 if __name__ == "__main__":
