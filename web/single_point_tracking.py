@@ -43,7 +43,11 @@ def get_start_position2(img, percentile = 90):
 
 def get_current_star_location(img, last_position, search_half_size = 50):
     blur_size = 11
-
+    
+    if last_position[0] < search_half_size or last_position[1] < search_half_size or last_position[1] > (img.shape[0] - search_half_size - 1) or last_position[0] > (img.shape[1] - search_half_size - 1):
+        return None
+    
+    print('last position: ', last_position)
     sub_img = img[int(last_position[1]) - search_half_size:int(last_position[1]) + search_half_size, int(last_position[0]) - search_half_size : int(last_position[0]) + search_half_size]
     blurred_sub_img = cv2.GaussianBlur(sub_img, (blur_size, blur_size), 0)
 
@@ -58,6 +62,7 @@ def get_current_star_location(img, last_position, search_half_size = 50):
 class SinglePointTracking():
     last_coords = None
     _is_tracking = False
+    failed_track_count = 0
 
     all_coords = []
 
@@ -70,9 +75,12 @@ class SinglePointTracking():
         self.all_coords = []
         self.base_frame = base_frame
 
-        if starting_coords is None:
-            self.starting_coords = get_start_position2(base_frame)
-            print('starting coords: ', self.starting_coords)
+        #if starting_coords is None:
+        self.starting_coords = get_start_position2(base_frame)
+        print('starting coords: ', self.starting_coords)
+
+        if self.starting_coords is None:
+            return False
 
         self.last_coords = self.starting_coords
         self._is_tracking = True
@@ -82,6 +90,18 @@ class SinglePointTracking():
 
     def process_frame(self, new_frame):
         current_location = get_current_star_location(new_frame, self.last_coords, self.search_img_half_size)
+        if current_location is None:
+            self.failed_track_count += 1
+            print('failed track count: ', self.failed_track_count)
+        
+            
+            return self.last_coords, None
+        
+
+
+        self.failed_track_count = 0
+            
+        
         # print(current_location, self.last_coords)
         self.last_coords = current_location
         shift = (current_location[0] - self.starting_coords[0], current_location[1] - self.starting_coords[1])

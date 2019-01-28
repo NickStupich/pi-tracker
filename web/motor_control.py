@@ -78,6 +78,7 @@ class MotorControl(object):
         
         current_delay_us = calculated_delay_us
         last_timestamp = datetime.now()
+        MotorControl.all_delays = []
         sleep_us(current_delay_us); #just to start from having a big offset at the start
         i=0
         while(not MotorControl._kill):
@@ -89,13 +90,14 @@ class MotorControl(object):
                 error_us = elapsed_us - current_delay_us
                 error_integral_us += error_us
                 
-                if i % 1000 == 0: print(error_integral_us)
+                #if i % 1000 == 0: print(error_integral_us)
                 
                 current_delay_us = calculated_delay_us * MotorControl.adjustment_factor * MotorControl.tracking_factor
                 
                 current_delay_minus_error_us = current_delay_us - error_integral_us
                 if current_delay_minus_error_us < 1000: current_delay_minus_error_us = 1000 #cant go <0, also need the stepper to move in time
                 sleep_us(current_delay_minus_error_us)
+                MotorControl.all_delays.append(current_delay_minus_error_us)
                 
                 last_timestamp = current_timestamp
                 output_step.value = not output_step.value
@@ -115,6 +117,11 @@ class MotorControl(object):
 if __name__ == "__main__":
     mc = MotorControl()
     print('after MotorControl()')
-    time.sleep(30)
+    time.sleep(10)
     mc.kill()
+    
+    import numpy as np
+    
+    delays = np.array(mc.all_delays)
+    print(np.mean(delays), np.min(delays), np.max(delays), np.std(delays))
         

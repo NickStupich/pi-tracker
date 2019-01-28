@@ -26,9 +26,15 @@ class Camera(BaseCamera):
                     BaseCamera.settings_changed = False
                     
                 image_rgb = np.empty((camera.resolution[1], camera.resolution[0], 3), dtype=np.uint8)
-                camera.capture(image_rgb, 'rgb')
-                image_bw = np.copy(image_rgb[:, :, 0])
+
+
+                image_rgb = np.empty((1232, 1664, 3), dtype=np.uint8)
                 
+                camera.capture(image_rgb, 'rgb')
+                if 1:
+                    image_bw_full = np.copy(image_rgb[:1232, :1640, 0])
+                    image_reshaped = np.reshape(image_bw_full, (image_bw_full.shape[0]//2, 2, image_bw_full.shape[1]//2, 2))
+                    image_bw = np.mean(image_reshaped, axis=(1, 3)).astype(image_reshaped.dtype)                
                 
                 if BaseCamera.save_images:
                     if images_directory is None:
@@ -48,6 +54,6 @@ class Camera(BaseCamera):
             
 def update_cam_params(BaseCamera, camera):
     print('setting camera parameters')
-    camera.resolution = (BaseCamera.resolution_x, BaseCamera.resolution_y)
+    camera.resolution = 1640, 1232
     camera.framerate = min(10, 1000 // BaseCamera.shutter_speed_ms)
     camera.shutter_speed = BaseCamera.shutter_speed_ms * 1000

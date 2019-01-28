@@ -164,8 +164,12 @@ class BaseCamera(object):
                     pos, shift = tracker.process_frame(frame)
                     print('relative position: ', pos, shift)
 
-                    n = BaseCamera.tracking_sub_img_half_size = 50 
-                    BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
+                    n = BaseCamera.tracking_sub_img_half_size
+
+                    if shift is None: #tracking failed
+                        pass
+                    else:   
+                        BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
 
                     if BaseCamera.tracking_overlay_enabled:
                         tracker.overlay_tracking_information(frame, BaseCamera.overlay_tracking_history)
