@@ -79,7 +79,7 @@ class CameraAdjuster(object):
                 adjustment = distance_along_guide / adjustment_target_seconds 
                 adjustment = np.clip(adjustment, -0.5, 0.5)
                 
-                new_speed_adjustment = 1.0 + adjustment
+                new_speed_adjustment = 1.0 - adjustment
 
                 print('adjustment: ', new_speed_adjustment)
 

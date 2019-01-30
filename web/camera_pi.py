@@ -13,7 +13,19 @@ class Camera(BaseCamera):
     @staticmethod
     def frames():
         count = 0
-        with picamera.PiCamera() as camera:
+        
+        try:
+            camera = picamera.PiCamera()
+        except:
+            print('error')
+            BaseCamera.error = True
+            
+            error_frame = np.ones((100, 100), np.uint8)*128
+            while 1:
+                yield error_frame
+                time.sleep(5)
+        
+        with camera:
             print('started picamera')
 
             update_cam_params(BaseCamera, camera)
@@ -32,7 +44,8 @@ class Camera(BaseCamera):
                 
                 camera.capture(image_rgb, 'rgb')
                 if 1:
-                    image_bw_full = np.copy(image_rgb[:1232, :1640, 0])
+                    image_bw_full = image_rgb[:1232, :1640, 0]
+                    image_bw_full = image_bw_full[::-1, ::-1]
                     image_reshaped = np.reshape(image_bw_full, (image_bw_full.shape[0]//2, 2, image_bw_full.shape[1]//2, 2))
                     image_bw = np.mean(image_reshaped, axis=(1, 3)).astype(image_reshaped.dtype)                
                 

@@ -104,6 +104,11 @@ class BaseCamera(object):
         BaseCamera.event.clear()
 
         frame = BaseCamera.frame
+        
+        if frame is None:
+            sub_img_half_size = 50
+            frame = np.ones((sub_img_half_size*2, sub_img_half_size*2), np.uint8) * 128
+        
         shift = BaseCamera.shift
 
         if BaseCamera.visual_gain != 1:
