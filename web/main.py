@@ -5,12 +5,16 @@ from flask import Flask, render_template, Response, redirect, request
 
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
 
+import is_pi
+
 # import camera driver
 if os.environ.get('CAMERA'):
     Camera = import_module('camera_' + os.environ['CAMERA']).Camera
 else:
-    from camera_pi import Camera
-    #from camera import Camera
+    if is_pi.is_pi:
+        from camera_pi import Camera
+    else:
+        from camera import Camera
     
 from motor_control import MotorControl
 from camera_adjuster import CameraAdjuster
@@ -65,7 +69,7 @@ def stopTracking():
 def gen(camera_func):
     """Video streaming generator function."""
     while True:
-        frame = camera_func()
+        frame, shift = camera_func()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
@@ -100,18 +104,23 @@ def enable_movement():
     
 @app.route('/start_following', methods=['POST'])
 def start_following():
+    cam = Camera()
+    if cam.tracking_enabled:
+        print('starting tracking')
+        cam.start_tracking()
+
     ca = CameraAdjuster()
-    ca.start_following()
+    ca.start_guiding()
     return redirect('/')
     
 @app.route('/stop_following', methods=['POST'])
 def stop_following():
     ca = CameraAdjuster()
-    ca.stop_following()
+    ca.stop_guiding()
     return redirect('/')
 
 if __name__ == '__main__':
     cam = Camera()
-    #ca = CameraAdjuster(cam)
+    ca = CameraAdjuster(cam)
     mc = MotorControl()
     app.run(host='0.0.0.0', threaded=True)

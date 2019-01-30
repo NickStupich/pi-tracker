@@ -10,11 +10,9 @@ from web import single_point_tracking
 
 fx = fy = 0.25
 def load_image(filename):
-	# print('loading ', filename)
 	result = cv2.imread(filename, 0)
 
 	result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
-	# print(result.shape, result.dtype)
 
 	return result
 

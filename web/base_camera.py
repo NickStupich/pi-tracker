@@ -104,6 +104,7 @@ class BaseCamera(object):
         BaseCamera.event.clear()
 
         frame = BaseCamera.frame
+        shift = BaseCamera.shift
 
         if BaseCamera.visual_gain != 1:
             #frame = frame * BaseCamera.visual_gain
@@ -112,14 +113,14 @@ class BaseCamera(object):
         ret, jpeg = cv2.imencode('.jpg', frame)
         # print('thread to web')
 
-        return jpeg.tobytes()
+        return jpeg.tobytes(), shift
 
     def get_subimg_frame(self):
         BaseCamera.subimg_event.wait()
         BaseCamera.subimg_event.clear()
         img = BaseCamera.sub_img
         ret, jpeg = cv2.imencode('.jpg', img)
-        return jpeg.tobytes()
+        return jpeg.tobytes(), None
     
     def start_tracking(self):
         BaseCamera.restart_tracking = True
@@ -135,6 +136,8 @@ class BaseCamera(object):
     def frames():
         """"Generator that returns frames from the camera."""
         raise RuntimeError('Must be implemented by subclasses.')
+
+
 
     @classmethod
     def update_settings(cls, speed_ms, newVisualGain, save_images, overlay_tracking_history):
@@ -155,6 +158,7 @@ class BaseCamera(object):
         frames_iterator = cls.frames()
         for frame in frames_iterator:
             BaseCamera.frame = frame
+            BaseCamera.shift = None
 
             if BaseCamera.tracking_enabled:
                 if not tracker.is_tracking() or BaseCamera.restart_tracking:
@@ -162,7 +166,8 @@ class BaseCamera(object):
                     BaseCamera.restart_tracking = False
                 else:
                     pos, shift = tracker.process_frame(frame)
-                    print('relative position: ', pos, shift)
+                    BaseCamera.shift = shift
+                    # print('relative position: ', pos, shift)
 
                     n = BaseCamera.tracking_sub_img_half_size
 

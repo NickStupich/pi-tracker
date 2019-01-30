@@ -47,7 +47,7 @@ def get_current_star_location(img, last_position, search_half_size = 50):
     if last_position[0] < search_half_size or last_position[1] < search_half_size or last_position[1] > (img.shape[0] - search_half_size - 1) or last_position[0] > (img.shape[1] - search_half_size - 1):
         return None
     
-    print('last position: ', last_position)
+    # print('last position: ', last_position)
     sub_img = img[int(last_position[1]) - search_half_size:int(last_position[1]) + search_half_size, int(last_position[0]) - search_half_size : int(last_position[0]) + search_half_size]
     blurred_sub_img = cv2.GaussianBlur(sub_img, (blur_size, blur_size), 0)
 

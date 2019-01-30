@@ -25,7 +25,7 @@ class Camera(BaseCamera):
 
         count = 0
         while True:
-            time.sleep(1)
+            time.sleep(0.5)
 
             index = count % len(imgs)
             if (count // len(imgs)) % 2 > 0: #flip around backwards for continuity

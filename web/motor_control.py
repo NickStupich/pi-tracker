@@ -1,10 +1,27 @@
-from gpiozero import LED
+
 import time
 import threading
 from datetime import datetime
 
 step_pin = 3
 microstep_pin = 2
+
+
+import is_pi
+
+if is_pi.is_pi:
+    from gpiozero import LED
+else:
+    class LED(object):
+        value = False
+        def __init__(*args):
+            pass
+
+        def on(self):
+            pass
+
+        def off(self):
+            pass
 
 """
 dir = LED(2)
