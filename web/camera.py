@@ -42,4 +42,4 @@ class Camera(BaseCamera):
 
             # print('camera returning frame')
 
-            yield img
+            yield img.copy()

@@ -104,10 +104,10 @@ def enable_movement():
     
 @app.route('/start_following', methods=['POST'])
 def start_following():
-    cam = Camera()
-    if cam.tracking_enabled:
-        print('starting tracking')
-        cam.start_tracking()
+    # cam = Camera()
+    # if cam.tracking_enabled:
+    #     print('starting tracking')
+    #     cam.start_tracking()
 
     ca = CameraAdjuster()
     ca.start_guiding()
