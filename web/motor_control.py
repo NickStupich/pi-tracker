@@ -76,7 +76,7 @@ class MotorControl(object):
     @classmethod
     def _thread(cls):
 
-        if not is_pi.ispi:
+        if not is_pi.is_pi:
             import matplotlib.pyplot as plt
             # plt.ion()
 
