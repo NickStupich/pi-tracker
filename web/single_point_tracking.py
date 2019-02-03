@@ -1,6 +1,11 @@
 import cv2
 import numpy as np
-#import matplotlib.pyplot as plt
+import scipy.optimize
+
+import is_pi
+
+if not is_pi.is_pi:
+    import matplotlib.pyplot as plt
 
 def get_start_position(img, crop_side_fraction = 0.1):
     
@@ -54,10 +59,50 @@ def get_current_star_location(img, last_position, search_half_size = 50):
     max_loc = np.argmax(blurred_sub_img)
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
 
+    if 1:
+        maxLoc = improve_star_location_gaussian_fit(sub_img, maxLoc)
+
     #todo: refine this
     current_position = (maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size))
 
+
     return current_position
+
+def improve_star_location_gaussian_fit(img, position):
+
+    size_pixels = 10
+
+    position = (int(position[0]), int(position[1]))
+
+    x = np.linspace(position[0] - size_pixels, position[0] + size_pixels, size_pixels*2 )
+    y = np.linspace(position[1] - size_pixels, position[1] + size_pixels, size_pixels*2 )
+    x, y = np.meshgrid(x, y)
+    sub_img = img[position[0] - size_pixels: position[0] + size_pixels, position[1] - size_pixels: position[1] + size_pixels]
+
+    print(x.shape, y.shape, sub_img.shape)
+
+    initial_guess = (255, 0, 0, 3, np.mean(sub_img))
+    popt, pcov = scipy.optimize.curve_fit(twoD_Gaussian, (x, y), sub_img, p0=initial_guess)
+
+    print(popt)
+
+    plt.imshow(sub_img); plt.show()
+
+
+def twoD_Gaussian(locs, amplitude, xo, yo, sigma, offset):
+    x, y = locs
+    g = offset + amplitude * np.exp(-sigma * ((x-xo)**2 + (y-yo)**2))
+    return g.ravel()
+
+    # xo = float(xo)
+    # yo = float(yo)    
+    # a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
+    # b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
+    # c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
+    # g = offset + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) 
+    #                         + c*((y-yo)**2)))
+    # return g.ravel()
+
 
 class SinglePointTracking():
     last_coords = None

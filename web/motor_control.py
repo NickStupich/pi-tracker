@@ -78,7 +78,7 @@ class MotorControl(object):
 
         if not is_pi.is_pi:
             import matplotlib.pyplot as plt
-            # plt.ion()
+            plt.ion()
 
         #output_dir = LED(dir_pin)
         output_step = LED(step_pin)
@@ -119,10 +119,11 @@ class MotorControl(object):
                 current_delay_minus_error_us = current_delay_us - error_integral_us
                 if current_delay_minus_error_us < 1000: current_delay_minus_error_us = 1000 #cant go <0, also need the stepper to move in time
                 
-                if not is_pi.is_pi:
-                    plt.plot(i, current_delay_minus_error_us, 'o')
+                if not is_pi.is_pi and False:
+                    plt.plot(current_delay_minus_error_us, 'o')
                     # plt.draw()
-                    plt.show(block=False)
+                    plt.pause(0.01)
+                    # plt.show(block=False)
 
                 sleep_us(current_delay_minus_error_us)
                 MotorControl.all_delays.append(current_delay_minus_error_us)
