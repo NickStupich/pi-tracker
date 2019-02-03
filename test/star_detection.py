@@ -5,6 +5,7 @@ import os
 import sys
 
 sys.path.append('..')
+sys.path.append('../web')
 from web import single_point_tracking
 
 
@@ -40,7 +41,8 @@ def main():
 		print(current_position)
 		n = 50
 		sub_img = img[current_position[1] - n: current_position[1] + n, current_position[0] - n:current_position[0]+n]
-		plt.imshow(sub_img); plt.title(fn); plt.show()
+		
+		# plt.imshow(sub_img); plt.title(fn); plt.show()
 		
 		# plt.imshow(img)
 		# plt.show()
