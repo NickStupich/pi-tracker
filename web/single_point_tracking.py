@@ -46,7 +46,7 @@ def get_start_position2(img, percentile = 90):
     result = get_start_position(img_masked)
     return result
 
-def get_current_star_location(img, last_position, search_half_size = 50):
+def get_current_star_location(img, last_position, search_half_size = 50, subPixelFit = True):
     blur_size = 11
     
     if last_position[0] < search_half_size or last_position[1] < search_half_size or last_position[1] > (img.shape[0] - search_half_size - 1) or last_position[0] > (img.shape[1] - search_half_size - 1):
@@ -61,7 +61,7 @@ def get_current_star_location(img, last_position, search_half_size = 50):
 
     # plt.imshow(sub_img); plt.scatter([maxLoc[0]], [maxLoc[1]]); plt.show()
 
-    if 1:
+    if subPixelFit:
         # maxLoc = improve_star_location_gaussian_fit(sub_img, maxLoc)
         maxLoc = improve_star_location_gaussian_fit(blurred_sub_img, maxLoc)
 
@@ -169,8 +169,8 @@ class SinglePointTracking():
     def is_tracking(self):
         return self._is_tracking
 
-    def process_frame(self, new_frame):
-        current_location = get_current_star_location(new_frame, self.last_coords, self.search_img_half_size)
+    def process_frame(self, new_frame, subPixelFit = True):
+        current_location = get_current_star_location(new_frame, self.last_coords, self.search_img_half_size, subPixelFit = subPixelFit)
         if current_location is None:
             
             return self.last_coords, None

@@ -34,6 +34,7 @@ class ShutterSpeedForm(Form):
     save = BooleanField('Save')
     visual_gain = IntegerField('Visual Gain:')
     overlay_tracking_history = BooleanField('Overlay tracking history')
+    subPixelFit = BooleanField('Sub Pixel Fit')
 
 @app.route('/')
 def index():
@@ -43,6 +44,7 @@ def index():
     shutterSpeedForm.save.data = Camera.save_images
     shutterSpeedForm.visual_gain.data = Camera.visual_gain
     shutterSpeedForm.overlay_tracking_history.data = Camera.overlay_tracking_history
+    shutterSpeedForm.subPixelFit.data = Camera.subPixelFit
 
     return render_template('index.html', camSettingsForm = shutterSpeedForm)
 
@@ -53,7 +55,8 @@ def changeSettings():
     newVisualGain = int(request.form['visual_gain'])
     save = (request.form['save'] == 'y') if 'save' in request.form else False
     overlay_tracking_history = (request.form['overlay_tracking_history'] == 'y') if 'overlay_tracking_history' in request.form else False
-    Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history)
+    subPixelFit = (request.form['subPixelFit'] == 'y') if 'subPixelFit' in request.form else False
+    Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
     return redirect('/')
 
 @app.route('/startRestartTracking', methods=['POST'])

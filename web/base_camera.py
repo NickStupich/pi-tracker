@@ -74,6 +74,8 @@ class BaseCamera(object):
     overlay_tracking_history = False
     failed_track_count = 0
 
+    subPixelFit = True
+
     def __init__(self):
 
         BaseCamera.sub_img = self.get_non_tracking_subimage()
@@ -141,13 +143,14 @@ class BaseCamera(object):
 
 
     @classmethod
-    def update_settings(cls, speed_ms, newVisualGain, save_images, overlay_tracking_history):
+    def update_settings(cls, speed_ms, newVisualGain, save_images, overlay_tracking_history, subPixelFit):
         print('updating settings')
         BaseCamera.shutter_speed_ms = speed_ms
         BaseCamera.save_images = save_images
         BaseCamera.settings_changed = True
         BaseCamera.visual_gain = newVisualGain
         BaseCamera.overlay_tracking_history = overlay_tracking_history
+        BaseCamera.subPixelFit = subPixelFit
 
     @classmethod
     def _thread(cls):
@@ -167,7 +170,7 @@ class BaseCamera(object):
                     tracker.restart_tracking(BaseCamera.raw_frame)
                     BaseCamera.restart_tracking = False
                 else:
-                    pos, shift = tracker.process_frame(BaseCamera.raw_frame)
+                    pos, shift = tracker.process_frame(BaseCamera.raw_frame, subPixelFit = BaseCamera.subPixelFit)
                     pos_int = (int(pos[0]), int(pos[1]))
                     BaseCamera.shift = shift
 

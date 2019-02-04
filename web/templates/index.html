@@ -32,16 +32,19 @@
 	<form action="/changeSettings" method="post">
 	            {{ camSettingsForm.csrf }}
 	<div class="input text">
-	                {{ camSettingsForm.speed.label }} {{ camSettingsForm.speed }}</div>
+	        {{ camSettingsForm.speed.label }} {{ camSettingsForm.speed }}</div>
 
 	<div class="input text">
-	                {{ camSettingsForm.visual_gain.label }} {{ camSettingsForm.visual_gain }}</div>
+	        {{ camSettingsForm.visual_gain.label }} {{ camSettingsForm.visual_gain }}</div>
 
 	<div class="checkbox">
 	        {{ camSettingsForm.save.label }} {{ camSettingsForm.save }} </div>
             
-	            <div class="checkbox">
-            {{ camSettingsForm.overlay_tracking_history.label }} {{ camSettingsForm.overlay_tracking_history }} </div>
+    <div class="checkbox">
+			{{ camSettingsForm.overlay_tracking_history.label }} {{ camSettingsForm.overlay_tracking_history }} </div>
+
+    <div class="checkbox">
+			{{ camSettingsForm.subPixelFit.label }} {{ camSettingsForm.subPixelFit }} </div>
 	        
 	<div class="input submit">
 	                <input type="submit" value="Update"></div>
