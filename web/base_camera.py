@@ -113,6 +113,14 @@ class BaseCamera(object):
         
         shift = BaseCamera.shift
 
+        target_size = 1000
+
+        if frame.shape[0] > target_size:
+            factor = frame.shape[0] // target_size
+            print('need to resize', frame.shape, factor)
+            frame = cv2.resize(frame, None, fx = 1.0 / factor, fy = 1.0 / factor)
+
+
         if BaseCamera.visual_gain != 1:
             #frame = frame * BaseCamera.visual_gain
             frame = np.clip(frame, 0, 255 / BaseCamera.visual_gain) * BaseCamera.visual_gain

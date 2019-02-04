@@ -13,7 +13,7 @@ fx = fy = 0.25
 def load_image(filename):
 	result = cv2.imread(filename, 0)
 
-	result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
+	# result = cv2.resize(result, None, fx = 0.25, fy = 0.25)
 
 	return result
 
@@ -25,7 +25,8 @@ def main():
 	# start_position = 	(2914, 2378)
 
 	# start_position = single_point_tracking.get_start_position2(load_image(os.path.join(folder, 'IMG_7955.jpg')))
-	start_position = (201, 694)
+	# start_position = (201, 694)
+	start_position = (1923, 3040)
 
 
 	last_position = start_position
@@ -38,14 +39,15 @@ def main():
 		img = load_image(full_fn)
 		# print(img.shape)
 
-		current_position = single_point_tracking.get_current_star_location(img, last_position)
+		current_position = single_point_tracking.get_current_star_location(img, last_position, subPixelFit = True)
 		# current_position = start_position
-		# print(current_position)
+		print(current_position)
 		current_position_int = (int(current_position[0]), int(current_position[1]))
 
 		n = 50
 		sub_img = img[current_position_int[1] - n: current_position_int[1] + n, current_position_int[0] - n:current_position_int[0]+n]
 		
+		# plt.imshow(img); plt.title(fn); plt.show()
 		# plt.imshow(sub_img); plt.title(fn); plt.show()
 		
 		# plt.imshow(img)
@@ -69,7 +71,7 @@ def main():
 
 	plt.plot(x, y); plt.grid(True); plt.show()
 
-	fit = np.polyfit(x, y, 1)
+	fit = np.polyfit(x, y, 3)
 
 	fit_ys = np.poly1d(fit)(x)
 	errs = fit_ys - y

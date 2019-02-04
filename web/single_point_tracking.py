@@ -63,7 +63,10 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
 
     if subPixelFit:
         # maxLoc = improve_star_location_gaussian_fit(sub_img, maxLoc)
-        maxLoc = improve_star_location_gaussian_fit(blurred_sub_img, maxLoc)
+        try:
+            maxLoc = improve_star_location_gaussian_fit(blurred_sub_img, maxLoc)
+        except Exception as e:
+            print(e)
 
     #todo: refine this
     current_position = (maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size))
@@ -96,8 +99,8 @@ def improve_star_location_gaussian_fit(img, position):
     # plt.plot(sub_img.ravel()); plt.plot(guess_plot); plt.show() 
 
     popt, pcov = scipy.optimize.curve_fit(twoD_Gaussian, (x, y), sub_img.ravel(), p0=initial_guess)
-
-
+    print(popt)
+    
     data_fitted = twoD_Gaussian((x, y), *popt)
     # print(data_fitted.shape) 
 

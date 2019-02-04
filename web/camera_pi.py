@@ -43,11 +43,14 @@ class Camera(BaseCamera):
                 image_rgb = np.empty((1232, 1664, 3), dtype=np.uint8)
                 
                 camera.capture(image_rgb, 'rgb')
-                if 1:
+                if 0:
                     image_bw_full = image_rgb[:1232, :1640, 0]
                     image_bw_full = image_bw_full[::-1, ::-1]
                     image_reshaped = np.reshape(image_bw_full, (image_bw_full.shape[0]//2, 2, image_bw_full.shape[1]//2, 2))
-                    image_bw = np.mean(image_reshaped, axis=(1, 3)).astype(image_reshaped.dtype)                
+                    image_bw = np.mean(image_reshaped, axis=(1, 3)).astype(image_reshaped.dtype)             
+                else:
+                    image_bw = image_rgb[:1232, :1640, 0]   
+                    image_bw = image_bw[::-1, ::-1]
                 
                 if BaseCamera.save_images:
                     if images_directory is None:
