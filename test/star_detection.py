@@ -19,18 +19,20 @@ def load_image(filename):
 
 
 def main():
-	folder = "F:/star_guiding/test_frames"
+	# folder = "F:/star_guiding/test_frames"
+	folder = "D:/star_guiding/test_frames"
 
 	# start_position = 	(2914, 2378)
 
-	start_position = single_point_tracking.get_start_position2(load_image(os.path.join(folder, 'IMG_7955.jpg')))
+	# start_position = single_point_tracking.get_start_position2(load_image(os.path.join(folder, 'IMG_7955.jpg')))
+	start_position = (201, 694)
 
 
 	last_position = start_position
 
 	all_positions = []
 
-	for fn in filter(lambda s: s.startswith('IMG'), os.listdir(folder)):#[:10]:
+	for fn in list(filter(lambda s: s.startswith('IMG'), os.listdir(folder))):#[40:]:
 		# print(fn)
 		full_fn = os.path.join(folder, fn)
 		img = load_image(full_fn)
@@ -38,9 +40,11 @@ def main():
 
 		current_position = single_point_tracking.get_current_star_location(img, last_position)
 		# current_position = start_position
-		print(current_position)
+		# print(current_position)
+		current_position_int = (int(current_position[0]), int(current_position[1]))
+
 		n = 50
-		sub_img = img[current_position[1] - n: current_position[1] + n, current_position[0] - n:current_position[0]+n]
+		sub_img = img[current_position_int[1] - n: current_position_int[1] + n, current_position_int[0] - n:current_position_int[0]+n]
 		
 		# plt.imshow(sub_img); plt.title(fn); plt.show()
 		
@@ -54,11 +58,21 @@ def main():
 
 	all_positions = np.array(all_positions)
 
+	t = np.arange(0, len(all_positions))
 
-	fit = np.polyfit(all_positions[:, 0], all_positions[:, 1], 1)
+	x = t
+	y = all_positions[:, 0]
+	# y = all_positions[:, 1]
 
-	fit_ys = np.poly1d(fit)(all_positions[:, 0])
-	errs = fit_ys - all_positions[:, 1]
+	x = x[40:]
+	y = y[40:]
+
+	plt.plot(x, y); plt.grid(True); plt.show()
+
+	fit = np.polyfit(x, y, 1)
+
+	fit_ys = np.poly1d(fit)(x)
+	errs = fit_ys - y
 	print('error std dev: ', np.std(errs))
 
 	plt.plot(errs); plt.show()

@@ -59,8 +59,11 @@ def get_current_star_location(img, last_position, search_half_size = 50):
     max_loc = np.argmax(blurred_sub_img)
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
 
+    # plt.imshow(sub_img); plt.scatter([maxLoc[0]], [maxLoc[1]]); plt.show()
+
     if 1:
-        maxLoc = improve_star_location_gaussian_fit(sub_img, maxLoc)
+        # maxLoc = improve_star_location_gaussian_fit(sub_img, maxLoc)
+        maxLoc = improve_star_location_gaussian_fit(blurred_sub_img, maxLoc)
 
     #todo: refine this
     current_position = (maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size))
@@ -70,28 +73,62 @@ def get_current_star_location(img, last_position, search_half_size = 50):
 
 def improve_star_location_gaussian_fit(img, position):
 
-    size_pixels = 10
+    size_pixels = 5
 
-    position = (int(position[0]), int(position[1]))
+    position_int = (int(position[0]), int(position[1]))
 
-    x = np.linspace(position[0] - size_pixels, position[0] + size_pixels, size_pixels*2 )
-    y = np.linspace(position[1] - size_pixels, position[1] + size_pixels, size_pixels*2 )
+    x = np.linspace(position_int[0] - size_pixels, position_int[0] + size_pixels, size_pixels*2 )
+    y = np.linspace(position_int[1] - size_pixels, position_int[1] + size_pixels, size_pixels*2 )
+    # print(x)
     x, y = np.meshgrid(x, y)
-    sub_img = img[position[0] - size_pixels: position[0] + size_pixels, position[1] - size_pixels: position[1] + size_pixels]
 
-    print(x.shape, y.shape, sub_img.shape)
+    # sub_img = img[position_int[0] - size_pixels: position_int[0] + size_pixels, position_int[1] - size_pixels: position_int[1] + size_pixels]
+    sub_img = img[position_int[1] - size_pixels: position_int[1] + size_pixels, position_int[0] - size_pixels: position_int[0] + size_pixels]
 
-    initial_guess = (255, 0, 0, 3, np.mean(sub_img))
-    popt, pcov = scipy.optimize.curve_fit(twoD_Gaussian, (x, y), sub_img, p0=initial_guess)
+    # print(x.shape, y.shape, sub_img.shape)
 
-    print(popt)
+    xy = np.vstack((x, y))
 
-    plt.imshow(sub_img); plt.show()
+    initial_guess = (255, position[0], position[1], 1, 0)#np.mean(sub_img))
+    guess_plot = twoD_Gaussian((x, y), *initial_guess)
+    # print(guess_plot.shape)
+
+    # plt.plot(sub_img.ravel()); plt.plot(guess_plot); plt.show() 
+
+    popt, pcov = scipy.optimize.curve_fit(twoD_Gaussian, (x, y), sub_img.ravel(), p0=initial_guess)
+
+
+    data_fitted = twoD_Gaussian((x, y), *popt)
+    # print(data_fitted.shape)
+
+    if 0: 
+        plt.subplot(1, 2, 1)
+        plt.imshow(sub_img)
+        plt.contour(data_fitted.reshape(x.shape), 8)
+        plt.subplot(1, 2, 2)
+        plt.imshow(guess_plot.reshape(sub_img.shape))
+        plt.show() 
+
+
+    # print(popt, initial_guess)
+
+    # plt.imshow(sub_img); 
+    # plt.imshow(twoD_Gaussian((x, y), *popt).reshape(sub_img.shape)); plt.show()
+
+    new_pos = (popt[1], popt[2])
+    print(position, new_pos)
+    # exit(0)
+
+    return new_pos
 
 
 def twoD_Gaussian(locs, amplitude, xo, yo, sigma, offset):
-    x, y = locs
+    x, y = locs                                                 
+    xo = float(xo)                                                              
+    yo = float(yo)            
     g = offset + amplitude * np.exp(-sigma * ((x-xo)**2 + (y-yo)**2))
+    # print(g.shape, g.ravel().shape)
+    # return g
     return g.ravel()
 
     # xo = float(xo)
