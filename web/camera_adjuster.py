@@ -9,6 +9,11 @@ from motor_control import MotorControl
 class CameraAdjuster(object):
     thread = None
     camera = None
+    desired_guide_location = None
+    guide_vector = None
+
+
+    orthogonal_distance = 0
     
     restartGuiding = False
     runGuiding = False
@@ -29,8 +34,6 @@ class CameraAdjuster(object):
             
     @classmethod
     def _thread(cls, camera):
-        desired_guide_location = None
-        guide_vector = None
         seconds_for_vector = 10
         adjustment_target_seconds = 3
         mc = MotorControl()
@@ -52,10 +55,10 @@ class CameraAdjuster(object):
 
                 mc.enable_movement()
                     
-                guide_vector = np.array((shift[0] - start_shift[0], shift[1] - start_shift[1])) / (end_time - start_time).seconds
-                desired_guide_location = shift
+                CameraAdjuster.guide_vector = np.array((shift[0] - start_shift[0], shift[1] - start_shift[1])) / (end_time - start_time).seconds
+                CameraAdjuster.desired_guide_location = shift
 
-                print('guide vector (per second): ', guide_vector)
+                print('guide vector (per second): ', CameraAdjuster.guide_vector)
                 CameraAdjuster.restartGuiding = False
                 CameraAdjuster.runGuiding = True
 
@@ -66,15 +69,15 @@ class CameraAdjuster(object):
 
                 frame, shift_since_start = camera.get_frame()
 
-                shift = np.array((shift_since_start[0] - desired_guide_location[0], shift_since_start[1] - desired_guide_location[1]))
+                shift = np.array((shift_since_start[0] - CameraAdjuster.desired_guide_location[0], shift_since_start[1] - CameraAdjuster.desired_guide_location[1]))
                 print(shift)
 
-                distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
+                distance_along_guide = np.dot(shift, CameraAdjuster.guide_vector) / (np.linalg.norm(CameraAdjuster.guide_vector)**2)
                 print(distance_along_guide)
 
-                orthogonal_vector = shift - distance_along_guide * guide_vector
-                orthogonal_distance = np.linalg.norm(orthogonal_vector) 
-                print('orthogonal: ', orthogonal_vector, orthogonal_distance)
+                orthogonal_vector = shift - distance_along_guide * CameraAdjuster.guide_vector
+                CameraAdjuster.orthogonal_distance = np.linalg.norm(orthogonal_vector) 
+                print('orthogonal: ', orthogonal_vector, CameraAdjuster.orthogonal_distance)
 
                 adjustment = distance_along_guide / adjustment_target_seconds 
                 adjustment = np.clip(adjustment, -0.5, 0.5)

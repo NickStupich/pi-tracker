@@ -72,7 +72,7 @@ class BaseCamera(object):
     tracking_overlay_enabled = True
     tracking_sub_img_half_size = 50
     overlay_tracking_history = False
-
+    failed_track_count = 0
 
     def __init__(self):
 
@@ -103,7 +103,7 @@ class BaseCamera(object):
         BaseCamera.event.wait()
         BaseCamera.event.clear()
 
-        frame = BaseCamera.frame
+        frame = BaseCamera.display_frame
         
         if frame is None:
             sub_img_half_size = 50
@@ -114,18 +114,14 @@ class BaseCamera(object):
         if BaseCamera.visual_gain != 1:
             #frame = frame * BaseCamera.visual_gain
             frame = np.clip(frame, 0, 255 / BaseCamera.visual_gain) * BaseCamera.visual_gain
-            
-        ret, jpeg = cv2.imencode('.jpg', frame)
-        # print('thread to web')
-
-        return jpeg.tobytes(), shift
+        
+        return frame, shift
 
     def get_subimg_frame(self):
         BaseCamera.subimg_event.wait()
         BaseCamera.subimg_event.clear()
         img = BaseCamera.sub_img
-        ret, jpeg = cv2.imencode('.jpg', img)
-        return jpeg.tobytes(), None
+        return img, None
     
     def start_tracking(self):
         BaseCamera.restart_tracking = True
@@ -161,17 +157,24 @@ class BaseCamera(object):
 
         print('Starting camera thread.')
         frames_iterator = cls.frames()
-        for frame in frames_iterator:
-            BaseCamera.frame = frame
+        for _frame in frames_iterator:
+            BaseCamera.raw_frame = _frame
+            BaseCamera.display_frame = _frame #downsample
             BaseCamera.shift = None
 
             if BaseCamera.tracking_enabled:
                 if not tracker.is_tracking() or BaseCamera.restart_tracking:
-                    tracker.restart_tracking(frame)
+                    tracker.restart_tracking(BaseCamera.raw_frame)
                     BaseCamera.restart_tracking = False
                 else:
-                    pos, shift = tracker.process_frame(frame)
+                    pos, shift = tracker.process_frame(BaseCamera.raw_frame)
+                    pos_int = (int(pos[0]), int(pos[1]))
                     BaseCamera.shift = shift
+
+                    if shift is None:
+                        BaseCamera.failed_track_count += 1
+                    else:
+                        BaseCamera.failed_track_count = 0
                     # print('relative position: ', pos, shift)
 
                     n = BaseCamera.tracking_sub_img_half_size
@@ -179,10 +182,10 @@ class BaseCamera(object):
                     if shift is None: #tracking failed
                         pass
                     else:   
-                        BaseCamera.sub_img = frame[pos[1] - n:pos[1]+n, pos[0]-n:pos[0]+n]
+                        BaseCamera.sub_img = BaseCamera.display_frame[pos_int[1] - n:pos_int[1]+n, pos_int[0]-n:pos_int[0]+n]
 
                     if BaseCamera.tracking_overlay_enabled:
-                        tracker.overlay_tracking_information(frame, BaseCamera.overlay_tracking_history)
+                        tracker.overlay_tracking_information(BaseCamera.display_frame, BaseCamera.overlay_tracking_history)
             
             #even if tracking not enabled we'll broadcast an empty fixed img.
             BaseCamera.subimg_event.set()

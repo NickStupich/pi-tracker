@@ -50,6 +50,7 @@ class MotorControl(object):
     _kill = False
     _movement_enabled = True
     _restart_movement = False
+    all_delays = []
     
     def __init__(self):
         if MotorControl.thread is None:
@@ -100,7 +101,7 @@ class MotorControl(object):
         
         current_delay_us = calculated_delay_us
         last_timestamp = datetime.now()
-        MotorControl.all_delays = []
+        # MotorControl.all_delays = []
         sleep_us(current_delay_us); #just to start from having a big offset at the start
         i=0
         while(not MotorControl._kill):

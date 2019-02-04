@@ -1,6 +1,29 @@
 <html>
   <head>
     <title>Video Streaming Demonstration</title>
+
+	<!--<script type="text/javascript" src="jquery-1.7.1.min.js"></script> -->
+	<script type="text/javascript" src="{{url_for('static', filename='jquery-1.7.1.min.js') }}"></script>
+
+	
+	<script>
+	function update_values() {
+            $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+            $.getJSON($SCRIPT_ROOT+"/updates",
+                function(data) {
+                   
+                	$("#MeanDelay").text(data.MeanDelay)
+                	$("#FailedTrackCount").text(data.FailedTrackCount)
+                	$("#MaxPixelValue").text(data.MaxPixelValue)
+
+                	$("#TrackVectorX").text(data.TrackVectorX)
+                	$("#TrackVectorY").text(data.TrackVectorY)
+                	$("#OrthogonalError").text(data.OrthogonalError)
+                });
+        }
+
+        setInterval(update_values, 500);
+	</script>
   </head>
   <body>
   
@@ -58,6 +81,17 @@
 			<div class="input submit">
 				<input type="submit" value= "Stop Guiding" ></div>
 	</form>
+
+	<div id="update_params">
+
+		Mean Motor Delay(us): <span id="MeanDelay"></span> </br>
+		Failed Tracking Count: <span id="FailedTrackCount"></span> </br>
+		Max Pixel Value (raw): <span id="MaxPixelValue"></span></br>
+		Track Vector X: <span id="TrackVectorX"></span></br>
+		Track Vector Y: <span id="TrackVectorY"></span></br>
+		Orthogonal Error: <span id="OrthogonalError"></span></br>
+
+	</div>
 
 
   </div>

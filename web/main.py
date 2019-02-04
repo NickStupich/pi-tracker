@@ -2,8 +2,12 @@
 from importlib import import_module
 import os
 from flask import Flask, render_template, Response, redirect, request
+from flask.json import jsonify
+import numpy as np
+import cv2
 
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
+
 
 import is_pi
 
@@ -69,9 +73,12 @@ def stopTracking():
 def gen(camera_func):
     """Video streaming generator function."""
     while True:
-        frame, shift = camera_func()
+        raw_frame, shift = camera_func()
+
+        ret, jpeg = cv2.imencode('.jpg', raw_frame)
+
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
 
 
 @app.route('/video_feed')
@@ -112,7 +119,24 @@ def start_following():
     ca = CameraAdjuster()
     ca.start_guiding()
     return redirect('/')
+
+@app.route('/updates', methods= ['GET'])
+def stuff():
+
+    cam = Camera()
+    ca = CameraAdjuster()
+    mc = MotorControl()
     
+    return jsonify(
+        FailedTrackCount = 0,
+        MeanDelay = np.mean(mc.all_delays) if len(mc.all_delays) > 0 else -1,
+        MaxPixelValue = int(np.max(cam.raw_frame)),
+        OrthogonalError = CameraAdjuster.orthogonal_distance,
+        TrackVectorX = ca.guide_vector[0] if ca.guide_vector is not None else -1, 
+        TrackVectorY = -ca.guide_vector[1] if ca.guide_vector is not None else -1,
+        )
+
+
 @app.route('/stop_following', methods=['POST'])
 def stop_following():
     ca = CameraAdjuster()

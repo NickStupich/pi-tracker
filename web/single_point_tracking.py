@@ -99,7 +99,7 @@ def improve_star_location_gaussian_fit(img, position):
 
 
     data_fitted = twoD_Gaussian((x, y), *popt)
-    # print(data_fitted.shape)
+    # print(data_fitted.shape) 
 
     if 0: 
         plt.subplot(1, 2, 1)
@@ -144,8 +144,7 @@ def twoD_Gaussian(locs, amplitude, xo, yo, sigma, offset):
 class SinglePointTracking():
     last_coords = None
     _is_tracking = False
-    failed_track_count = 0
-
+    
     all_coords = []
 
     def __init__(self, search_img_half_size):
@@ -173,16 +172,8 @@ class SinglePointTracking():
     def process_frame(self, new_frame):
         current_location = get_current_star_location(new_frame, self.last_coords, self.search_img_half_size)
         if current_location is None:
-            self.failed_track_count += 1
-            print('failed track count: ', self.failed_track_count)
-        
             
             return self.last_coords, None
-        
-
-
-        self.failed_track_count = 0
-            
         
         # print(current_location, self.last_coords)
         self.last_coords = current_location
@@ -192,8 +183,8 @@ class SinglePointTracking():
 
     def overlay_tracking_information(self, frame, overlay_tracking_history = False, overlay_color = (255,)):
         n = self.search_img_half_size
-        cv2.rectangle(frame, (self.last_coords[0] - n, self.last_coords[1] - n), (self.last_coords[0] + n, self.last_coords[1] + n), overlay_color)
+        cv2.rectangle(frame, (int(self.last_coords[0]) - n, int(self.last_coords[1]) - n), (int(self.last_coords[0]) + n, int(self.last_coords[1]) + n), overlay_color)
         
         if overlay_tracking_history:
             for i in range(1, len(self.all_coords)):
-                cv2.line(frame, self.all_coords[i-1], self.all_coords[i], overlay_color)
+                cv2.line(frame, (int(self.all_coords[i-1][0]), int(self.all_coords[i-1][1])), (int(self.all_coords[i][0]), int(self.all_coords[i][1])), overlay_color)

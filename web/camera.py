@@ -19,7 +19,9 @@ class Camera(BaseCamera):
     @staticmethod
     def frames():
 
-        folder = 'F:/star_guiding/test_frames'
+        # folder = 'F:/star_guiding/test_frames'
+        folder = 'D:/star_guiding/test_frames'
+
         filenames = list(map(lambda s2: os.path.join(folder, s2), filter(lambda s: s.startswith('IMG'), os.listdir(folder))))
         imgs = [None for file in filenames]
 
