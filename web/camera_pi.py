@@ -7,6 +7,12 @@ import cv2
 import os
 from datetime import datetime
 
+resolution = 1640, 1232
+resolution_padded = 1664, 1232
+
+#resolution = 3280, 2464
+#resolution_padded = 3280, 2464
+
 class Camera(BaseCamera):
     images_directory = None
     
@@ -40,16 +46,16 @@ class Camera(BaseCamera):
                 image_rgb = np.empty((camera.resolution[1], camera.resolution[0], 3), dtype=np.uint8)
 
 
-                image_rgb = np.empty((1232, 1664, 3), dtype=np.uint8)
+                image_rgb = np.empty((resolution_padded[1], resolution_padded[0], 3), dtype=np.uint8)
                 
                 camera.capture(image_rgb, 'rgb')
                 if 0:
-                    image_bw_full = image_rgb[:1232, :1640, 0]
+                    image_bw_full = image_rgb[:resolution[1], :resolution[0], 0]
                     image_bw_full = image_bw_full[::-1, ::-1]
                     image_reshaped = np.reshape(image_bw_full, (image_bw_full.shape[0]//2, 2, image_bw_full.shape[1]//2, 2))
                     image_bw = np.mean(image_reshaped, axis=(1, 3)).astype(image_reshaped.dtype)             
                 else:
-                    image_bw = image_rgb[:1232, :1640, 0]   
+                    image_bw = image_rgb[:resolution[1], :resolution[0], 0]   
                     image_bw = image_bw[::-1, ::-1]
                 
                 if BaseCamera.save_images:
@@ -70,6 +76,7 @@ class Camera(BaseCamera):
             
 def update_cam_params(BaseCamera, camera):
     print('setting camera parameters')
-    camera.resolution = 1640, 1232
+
+    camera.resolution = resolution
     camera.framerate = min(10, 1000 // BaseCamera.shutter_speed_ms)
     camera.shutter_speed = BaseCamera.shutter_speed_ms * 1000

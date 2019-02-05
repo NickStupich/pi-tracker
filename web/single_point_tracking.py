@@ -58,6 +58,10 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
 
     max_loc = np.argmax(blurred_sub_img)
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
+    
+    if abs(maxLoc[0] - search_half_size) > 20 or abs(maxLoc[1] - search_half_size) > 20:
+        print('too much tracking change, failing out', maxLoc)
+        return None
 
     # plt.imshow(sub_img); plt.scatter([maxLoc[0]], [maxLoc[1]]); plt.show()
 
@@ -99,7 +103,7 @@ def improve_star_location_gaussian_fit(img, position):
     # plt.plot(sub_img.ravel()); plt.plot(guess_plot); plt.show() 
 
     popt, pcov = scipy.optimize.curve_fit(twoD_Gaussian, (x, y), sub_img.ravel(), p0=initial_guess)
-    print(popt)
+    #print(popt)
     
     data_fitted = twoD_Gaussian((x, y), *popt)
     # print(data_fitted.shape) 
@@ -178,6 +182,17 @@ class SinglePointTracking():
             
             return self.last_coords, None
         
+        n = self.search_img_half_size
+        
+        valid = current_location is not None \
+            and current_location[0] > n \
+            and current_location[1] > n \
+            and current_location[0] < new_frame.shape[1] - n \
+            and current_location[1] < new_frame.shape[0] - n
+        
+        if not valid:
+            return self.last_coords, None
+        
         # print(current_location, self.last_coords)
         self.last_coords = current_location
         shift = (current_location[0] - self.starting_coords[0], current_location[1] - self.starting_coords[1])
@@ -186,7 +201,17 @@ class SinglePointTracking():
 
     def overlay_tracking_information(self, frame, overlay_tracking_history = False, overlay_color = (255,)):
         n = self.search_img_half_size
-        cv2.rectangle(frame, (int(self.last_coords[0]) - n, int(self.last_coords[1]) - n), (int(self.last_coords[0]) + n, int(self.last_coords[1]) + n), overlay_color)
+        #print(self.last_coords, n)
+        
+        valid = self.last_coords is not None \
+            and self.last_coords[0] > n \
+            and self.last_coords[1] > n \
+            and self.last_coords[0] < frame.shape[1] - n \
+            and self.last_coords[1] < frame.shape[0] - n
+        
+        if valid:
+            #print(frame.shape, frame.dtype)
+            cv2.rectangle(frame, (int(self.last_coords[0]) - n, int(self.last_coords[1]) - n), (int(self.last_coords[0]) + n, int(self.last_coords[1]) + n), overlay_color)
         
         if overlay_tracking_history:
             for i in range(1, len(self.all_coords)):

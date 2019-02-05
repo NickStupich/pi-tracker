@@ -64,8 +64,6 @@ class BaseCamera(object):
     settings_changed = False
     shutter_speed_ms = 100
     visual_gain = 1
-    resolution_x = 672
-    resolution_y = 496
     save_images = False
     tracking_enabled = False
     restart_tracking = True
@@ -113,11 +111,11 @@ class BaseCamera(object):
         
         shift = BaseCamera.shift
 
-        target_size = 1000
+        target_size = 600
 
         if frame.shape[0] > target_size:
             factor = frame.shape[0] // target_size
-            print('need to resize', frame.shape, factor)
+            #print('need to resize', frame.shape, factor)
             frame = cv2.resize(frame, None, fx = 1.0 / factor, fy = 1.0 / factor)
 
 
@@ -170,7 +168,7 @@ class BaseCamera(object):
         frames_iterator = cls.frames()
         for _frame in frames_iterator:
             BaseCamera.raw_frame = _frame
-            BaseCamera.display_frame = _frame #downsample
+            BaseCamera.display_frame = np.copy(_frame) #downsample
             BaseCamera.shift = None
 
             if BaseCamera.tracking_enabled:
@@ -181,7 +179,7 @@ class BaseCamera(object):
                     pos, shift = tracker.process_frame(BaseCamera.raw_frame, subPixelFit = BaseCamera.subPixelFit)
                     pos_int = (int(pos[0]), int(pos[1]))
                     BaseCamera.shift = shift
-
+                    
                     if shift is None:
                         BaseCamera.failed_track_count += 1
                     else:
@@ -199,8 +197,7 @@ class BaseCamera(object):
                         tracker.overlay_tracking_information(BaseCamera.display_frame, BaseCamera.overlay_tracking_history)
             
             #even if tracking not enabled we'll broadcast an empty fixed img.
-            BaseCamera.subimg_event.set()
-            
+            BaseCamera.subimg_event.set()            
             BaseCamera.event.set()  # send signal to clients
             time.sleep(0)
                             

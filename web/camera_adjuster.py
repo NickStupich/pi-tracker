@@ -68,21 +68,25 @@ class CameraAdjuster(object):
             else:
 
                 frame, shift_since_start = camera.get_frame()
-
-                shift = np.array((shift_since_start[0] - CameraAdjuster.desired_guide_location[0], shift_since_start[1] - CameraAdjuster.desired_guide_location[1]))
-                print(shift)
-
-                distance_along_guide = np.dot(shift, CameraAdjuster.guide_vector) / (np.linalg.norm(CameraAdjuster.guide_vector)**2)
-                print(distance_along_guide)
-
-                orthogonal_vector = shift - distance_along_guide * CameraAdjuster.guide_vector
-                CameraAdjuster.orthogonal_distance = np.linalg.norm(orthogonal_vector) 
-                print('orthogonal: ', orthogonal_vector, CameraAdjuster.orthogonal_distance)
-
-                adjustment = distance_along_guide / adjustment_target_seconds 
-                adjustment = np.clip(adjustment, -0.5, 0.5)
                 
-                new_speed_adjustment = 1.0 - adjustment
+                if shift_since_start is None:
+                    new_speed_adjustment = 1
+                
+                else:
+                    shift = np.array((shift_since_start[0] - CameraAdjuster.desired_guide_location[0], shift_since_start[1] - CameraAdjuster.desired_guide_location[1]))
+                    print(shift)
+
+                    distance_along_guide = np.dot(shift, CameraAdjuster.guide_vector) / (np.linalg.norm(CameraAdjuster.guide_vector)**2)
+                    print(distance_along_guide)
+
+                    orthogonal_vector = shift - distance_along_guide * CameraAdjuster.guide_vector
+                    CameraAdjuster.orthogonal_distance = np.linalg.norm(orthogonal_vector) 
+                    print('orthogonal: ', orthogonal_vector, CameraAdjuster.orthogonal_distance)
+
+                    adjustment = distance_along_guide / adjustment_target_seconds 
+                    adjustment = np.clip(adjustment, -0.5, 0.5)
+                    
+                    new_speed_adjustment = 1.0 - adjustment
 
                 print('adjustment: ', new_speed_adjustment)
 

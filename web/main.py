@@ -127,7 +127,7 @@ def stuff():
     mc = MotorControl()
     
     return jsonify(
-        FailedTrackCount = 0,
+        FailedTrackCount = cam.failed_track_count,
         MeanDelay = np.mean(mc.all_delays) if len(mc.all_delays) > 0 else -1,
         MaxPixelValue = int(np.max(cam.raw_frame)),
         OrthogonalError = CameraAdjuster.orthogonal_distance,
