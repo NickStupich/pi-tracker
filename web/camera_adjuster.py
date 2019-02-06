@@ -4,7 +4,7 @@ import threading
 from datetime import datetime
 import numpy as np
 
-from motor_control import MotorControl
+from motor_control_pwm import MotorControl
 
 class CameraAdjuster(object):
     thread = None

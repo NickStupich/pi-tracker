@@ -6,6 +6,7 @@ from datetime import datetime
 step_pin = 3
 microstep_pin = 2
 
+raise Exception("this is obsolete. use motor_control_pwm.py")
 
 import is_pi
 
@@ -108,7 +109,12 @@ class MotorControl(object):
             if MotorControl._movement_enabled:
                 current_timestamp = datetime.now()
                 delta = current_timestamp - last_timestamp
-                elapsed_us = delta.seconds * 1E6 + delta.microseconds
+                
+                if delta.seconds < 0 or delta.seconds > 5: #time probably got updated with ntp
+                    elapsed_us = current_delay_us
+                    print('delta crazy: ', delta)
+                else:   
+                    elapsed_us = delta.seconds * 1E6 + delta.microseconds
                 
                 error_us = elapsed_us - current_delay_us
                 error_integral_us += error_us

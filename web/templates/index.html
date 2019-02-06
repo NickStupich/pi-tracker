@@ -12,7 +12,7 @@
             $.getJSON($SCRIPT_ROOT+"/updates",
                 function(data) {
                    
-                	$("#MeanDelay").text(data.MeanDelay)
+                	$("#MeanAdjustment").text(data.MeanAdjustment)
                 	$("#FailedTrackCount").text(data.FailedTrackCount)
                 	$("#MaxPixelValue").text(data.MaxPixelValue)
 
@@ -87,7 +87,7 @@
 
 	<div id="update_params">
 
-		Mean Motor Delay(us): <span id="MeanDelay"></span> </br>
+		Mean Adjustment Factor: <span id="MeanAdjustment"></span> </br>
 		Failed Tracking Count: <span id="FailedTrackCount"></span> </br>
 		Max Pixel Value (raw): <span id="MaxPixelValue"></span></br>
 		Track Vector X: <span id="TrackVectorX"></span></br>

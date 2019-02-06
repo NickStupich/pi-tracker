@@ -20,7 +20,7 @@ else:
     else:
         from camera import Camera
     
-from motor_control import MotorControl
+from motor_control_pwm import MotorControl
 from camera_adjuster import CameraAdjuster
 
 # Raspberry Pi camera module (requires picamera package)
@@ -128,7 +128,7 @@ def stuff():
     
     return jsonify(
         FailedTrackCount = cam.failed_track_count,
-        MeanDelay = np.mean(mc.all_delays) if len(mc.all_delays) > 0 else -1,
+        MeanAdjustment = -1,
         MaxPixelValue = int(np.max(cam.raw_frame)),
         OrthogonalError = CameraAdjuster.orthogonal_distance,
         TrackVectorX = ca.guide_vector[0] if ca.guide_vector is not None else -1, 
