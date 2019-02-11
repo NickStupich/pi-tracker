@@ -21,7 +21,8 @@ def load_image(filename):
 def main():
 	# folder = "F:/star_guiding/test_frames"
 	# folder = "D:/star_guiding/test_frames"
-	folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
+	# folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
+	folder = 'F:/star_guiding/images/2019-02-05.15-27-53'
 
 	# start_position = 	(2914, 2378)
 
@@ -33,8 +34,15 @@ def main():
 	last_position = None#start_position
 
 	all_positions = []
+	t = []
 
-	for i, fn in enumerate(list(os.listdir(folder))[:400]):
+	files = list(sorted(os.listdir(folder), key = lambda s: int(s.split('.')[0])))
+	# print(files)
+
+	# print(os.listdir(folder)[4278])
+
+	for i, fn in enumerate(files):
+		# if i > 1000: break
 		# print(fn)
 		full_fn = os.path.join(folder, fn)
 		img = load_image(full_fn)
@@ -43,9 +51,9 @@ def main():
 		if i == 0: 
 			last_position = single_point_tracking.get_start_position2(img)
 
-		current_position = single_point_tracking.get_current_star_location(img, last_position, subPixelFit = True)
+		current_position = single_point_tracking.get_current_star_location(img, last_position, subPixelFit = False)
 		# current_position = start_position
-		print(current_position)
+		# print(i, current_position)
 
 
 		if 0:
@@ -64,27 +72,43 @@ def main():
 			last_position = current_position
 
 			all_positions.append(current_position)
+			t.append(i)
+		else:
+			# all_positions.append((-1, -1))
+			pass
+
 
 	all_positions = np.array(all_positions)
 
-	t = np.arange(0, len(all_positions))
+	plt.subplot(1, 2, 1)
+	plt.plot(t, all_positions[:, 0], '--.')
+	plt.title('x')
 
-	x = t
-	y = all_positions[:, 0]
+	plt.subplot(1, 2, 2)
+	plt.plot(t, all_positions[:, 1], '--.')
+	plt.title('y')
+
+	plt.show()
+
+	# x = t
+	# y = all_positions[:, 0]
 	# y = all_positions[:, 1]
 
-	x = x[40:]
-	y = y[40:]
+	# x = x[40:]
+	# y = y[40:]
 
-	plt.plot(x, y); plt.grid(True); plt.show()
+	# plt.plot(x, y); plt.grid(True); plt.show()
 
-	fit = np.polyfit(x, y, 3)
 
-	fit_ys = np.poly1d(fit)(x)
-	errs = fit_ys - y
-	print('error std dev: ', np.std(errs))
 
-	plt.plot(errs); plt.show()
+
+	# fit = np.polyfit(x, y, 3)
+
+	# fit_ys = np.poly1d(fit)(x)
+	# errs = fit_ys - y
+	# print('error std dev: ', np.std(errs))
+
+	# plt.plot(errs); plt.show()
 
 
 	# plt.scatter(all_positions[:, 0], all_positions[:, 1]); plt.show()
