@@ -20,32 +20,39 @@ def load_image(filename):
 
 def main():
 	# folder = "F:/star_guiding/test_frames"
-	folder = "D:/star_guiding/test_frames"
+	# folder = "D:/star_guiding/test_frames"
+	folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
 
 	# start_position = 	(2914, 2378)
 
 	# start_position = single_point_tracking.get_start_position2(load_image(os.path.join(folder, 'IMG_7955.jpg')))
 	# start_position = (201, 694)
-	start_position = (1923, 3040)
+	# start_position = (1923, 3040)
 
 
-	last_position = start_position
+	last_position = None#start_position
 
 	all_positions = []
 
-	for fn in list(filter(lambda s: s.startswith('IMG'), os.listdir(folder))):#[40:]:
+	for i, fn in enumerate(list(os.listdir(folder))[:400]):
 		# print(fn)
 		full_fn = os.path.join(folder, fn)
 		img = load_image(full_fn)
 		# print(img.shape)
 
+		if i == 0: 
+			last_position = single_point_tracking.get_start_position2(img)
+
 		current_position = single_point_tracking.get_current_star_location(img, last_position, subPixelFit = True)
 		# current_position = start_position
 		print(current_position)
-		current_position_int = (int(current_position[0]), int(current_position[1]))
 
-		n = 50
-		sub_img = img[current_position_int[1] - n: current_position_int[1] + n, current_position_int[0] - n:current_position_int[0]+n]
+
+		if 0:
+			current_position_int = (int(current_position[0]), int(current_position[1]))
+
+			n = 50
+			sub_img = img[current_position_int[1] - n: current_position_int[1] + n, current_position_int[0] - n:current_position_int[0]+n]
 		
 		# plt.imshow(img); plt.title(fn); plt.show()
 		# plt.imshow(sub_img); plt.title(fn); plt.show()
@@ -53,10 +60,10 @@ def main():
 		# plt.imshow(img)
 		# plt.show()
 
+		if current_position is not None:
+			last_position = current_position
 
-		last_position = current_position
-
-		all_positions.append(current_position)
+			all_positions.append(current_position)
 
 	all_positions = np.array(all_positions)
 

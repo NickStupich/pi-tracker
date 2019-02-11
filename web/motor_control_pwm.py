@@ -20,8 +20,9 @@ import is_pi
 if is_pi.is_pi:
     from gpiozero import LED, PWMLED
 else:
-    class LED(object):
+    class PWMLED(object):
         value = False
+        frequency = 0
         def __init__(*args):
             pass
 
@@ -30,6 +31,11 @@ else:
 
         def off(self):
             pass
+
+    class LED(object):
+        def __init__(*args): pass
+        def on(self): pass
+        def off(self): pass
         
 
 class MotorEvent(object):

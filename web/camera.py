@@ -20,14 +20,16 @@ class Camera(BaseCamera):
     def frames():
 
         # folder = 'F:/star_guiding/test_frames'
-        folder = 'D:/star_guiding/test_frames'
+        # folder = 'D:/star_guiding/test_frames'
+        folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
 
-        filenames = list(map(lambda s2: os.path.join(folder, s2), filter(lambda s: s.startswith('IMG'), os.listdir(folder))))
+        # filenames = list(map(lambda s2: os.path.join(folder, s2), filter(lambda s: s.startswith('IMG'), os.listdir(folder))))
+        filenames = list(map(lambda s2: os.path.join(folder, s2), os.listdir(folder)))
         imgs = [None for file in filenames]
 
         count = 0
         while True:
-            time.sleep(0.5)
+            time.sleep(0.1)
 
             index = count % len(imgs)
             if (count // len(imgs)) % 2 > 0: #flip around backwards for continuity

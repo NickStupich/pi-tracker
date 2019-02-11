@@ -116,7 +116,7 @@ class BaseCamera(object):
         if frame.shape[0] > target_size:
             factor = frame.shape[0] // target_size
             #print('need to resize', frame.shape, factor)
-            frame = cv2.resize(frame, None, fx = 1.0 / factor, fy = 1.0 / factor)
+            frame = cv2.resize(frame, None, fx = 1.0 / factor, fy = 1.0 / factor, interpolation=cv2.INTER_AREA)
 
 
         if BaseCamera.visual_gain != 1:
