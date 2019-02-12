@@ -1,4 +1,8 @@
 import os
 
 # is_pi = True
-is_pi = os.uname().nodename == 'raspberrypi'
+
+if not 'uname' in dir(os): 
+	is_pi = False
+else:
+	is_pi = os.uname().nodename == 'raspberrypi'

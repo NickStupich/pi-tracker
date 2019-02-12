@@ -46,9 +46,11 @@ def get_start_position2(img, percentile = 90):
     result = get_start_position(img_masked)
     return result
 
-def get_current_star_location(img, last_position, search_half_size = 50, subPixelFit = True):
+
+ema_num = 0
+ema_denom = 0
+def get_current_star_location(img, last_position, search_half_size = 50, subPixelFit = True, ema_smoothing = None):
     blur_size = 11
-    
     if last_position[0] < search_half_size or last_position[1] < search_half_size or last_position[1] > (img.shape[0] - search_half_size - 1) or last_position[0] > (img.shape[1] - search_half_size - 1):
         return None
     
@@ -60,7 +62,7 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
     
     if abs(maxLoc[0] - search_half_size) > 20 or abs(maxLoc[1] - search_half_size) > 20:
-        print('too much tracking change, failing out', maxLoc)
+        # print('too much tracking change, failing out', maxLoc)
         return None
 
     # plt.imshow(sub_img); plt.scatter([maxLoc[0]], [maxLoc[1]]); plt.show()
@@ -68,9 +70,27 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
     if subPixelFit:
         # maxLoc = improve_star_location_gaussian_fit(sub_img, maxLoc)
         try:
-            maxLoc = improve_star_location_gaussian_fit(blurred_sub_img, maxLoc)
+            subPixelMaxLoc = improve_star_location_gaussian_fit(blurred_sub_img, maxLoc)
+
+            subPixelMoveLimit = 5
+
+            if abs(subPixelMaxLoc[0] - maxLoc[0]) > subPixelMoveLimit or abs(subPixelMaxLoc[1] - maxLoc[1]) > subPixelMoveLimit:
+                print('sub pixel fitting moved too far: ', maxLoc, subPixelMaxLoc)
+
+            else:
+                maxLoc = subPixelMaxLoc
+
         except Exception as e:
             print(e)
+
+
+    if ema_smoothing:
+        global ema_num, ema_denom
+        ema_num = ema_num * (1 - ema_smoothing) + ema_smoothing * np.array(maxLoc)
+        ema_denom = ema_denom * (1 - ema_smoothing) + ema_smoothing
+
+        maxLoc = ema_num / ema_denom
+
 
     #todo: refine this
     current_position = (maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size))
@@ -123,7 +143,7 @@ def improve_star_location_gaussian_fit(img, position):
     # plt.imshow(twoD_Gaussian((x, y), *popt).reshape(sub_img.shape)); plt.show()
 
     new_pos = (popt[1], popt[2])
-    print(position, new_pos)
+    # print(position, new_pos)
     # exit(0)
 
     return new_pos
