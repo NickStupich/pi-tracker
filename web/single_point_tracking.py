@@ -61,7 +61,8 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
     max_loc = np.argmax(blurred_sub_img)
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blurred_sub_img)
     
-    if abs(maxLoc[0] - search_half_size) > 20 or abs(maxLoc[1] - search_half_size) > 20:
+    changeLimitPixels = 20
+    if abs(maxLoc[0] - search_half_size) > changeLimitPixels or abs(maxLoc[1] - search_half_size) > changeLimitPixels:
         # print('too much tracking change, failing out', maxLoc)
         return None
 
@@ -171,6 +172,7 @@ def twoD_Gaussian(locs, amplitude, xo, yo, sigma, offset):
 class SinglePointTracking():
     last_coords = None
     _is_tracking = False
+    starting_coords = None
     
     all_coords = []
 

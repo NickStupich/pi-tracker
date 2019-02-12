@@ -21,8 +21,8 @@ def load_image(filename):
 def main():
 	# folder = "F:/star_guiding/test_frames"
 	# folder = "D:/star_guiding/test_frames"
-	# folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
-	folder = 'F:/star_guiding/images/2019-02-05.15-27-53'
+	folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
+	# folder = 'F:/star_guiding/images/2019-02-05.15-27-53'
 
 	# start_position = 	(2914, 2378)
 
@@ -42,7 +42,7 @@ def main():
 	# print(os.listdir(folder)[4278])
 
 	for i, fn in enumerate(files):
-		# if i > 1000: break
+		if i > 4000: break
 		# print(fn)
 		full_fn = os.path.join(folder, fn)
 		img = load_image(full_fn)

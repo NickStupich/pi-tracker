@@ -18,6 +18,11 @@
 
                 	$("#TrackVectorX").text(data.TrackVectorX)
                 	$("#TrackVectorY").text(data.TrackVectorY)
+                	
+                	$("#StartedPosition").text(data.StartedPosition)
+                	$("#CurrentPosition").text(data.CurrentPosition)
+ 
+                	$("#ParallelError").text(data.ParallelError)
                 	$("#OrthogonalError").text(data.OrthogonalError)
                 });
         }
@@ -92,7 +97,10 @@
 		Max Pixel Value (raw): <span id="MaxPixelValue"></span></br>
 		Track Vector X: <span id="TrackVectorX"></span></br>
 		Track Vector Y: <span id="TrackVectorY"></span></br>
+		Started Tracking Position: <span id="StartedPosition"></span></br>
+		Current Tracking Position: <span id="CurrentPosition"></span></br>
 		Orthogonal Error: <span id="OrthogonalError"></span></br>
+		Parallel Tracking Error: <span id="ParallelError"></span></br>
 
 	</div>
 

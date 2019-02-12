@@ -162,7 +162,7 @@ class BaseCamera(object):
     def _thread(cls):
         """Camera background thread."""
 
-        tracker = SinglePointTracking(BaseCamera.tracking_sub_img_half_size)
+        BaseCamera.tracker = SinglePointTracking(BaseCamera.tracking_sub_img_half_size)
 
         print('Starting camera thread.')
         frames_iterator = cls.frames()
@@ -172,11 +172,11 @@ class BaseCamera(object):
             BaseCamera.shift = None
 
             if BaseCamera.tracking_enabled:
-                if not tracker.is_tracking() or BaseCamera.restart_tracking:
-                    tracker.restart_tracking(BaseCamera.raw_frame)
+                if not BaseCamera.tracker.is_tracking() or BaseCamera.restart_tracking:
+                    BaseCamera.tracker.restart_tracking(BaseCamera.raw_frame)
                     BaseCamera.restart_tracking = False
                 else:
-                    pos, shift = tracker.process_frame(BaseCamera.raw_frame, subPixelFit = BaseCamera.subPixelFit)
+                    pos, shift = BaseCamera.tracker.process_frame(BaseCamera.raw_frame, subPixelFit = BaseCamera.subPixelFit)
                     pos_int = (int(pos[0]), int(pos[1]))
                     BaseCamera.shift = shift
                     
@@ -194,7 +194,7 @@ class BaseCamera(object):
                         BaseCamera.sub_img = BaseCamera.display_frame[pos_int[1] - n:pos_int[1]+n, pos_int[0]-n:pos_int[0]+n]
 
                     if BaseCamera.tracking_overlay_enabled:
-                        tracker.overlay_tracking_information(BaseCamera.display_frame, BaseCamera.overlay_tracking_history)
+                        BaseCamera.tracker.overlay_tracking_information(BaseCamera.display_frame, BaseCamera.overlay_tracking_history)
             
             #even if tracking not enabled we'll broadcast an empty fixed img.
             BaseCamera.subimg_event.set()            

@@ -13,8 +13,9 @@ class CameraAdjuster(object):
     guide_vector = None
 
 
-    orthogonal_distance = 0
-    
+    orthogonal_distance = None
+    parallel_distance = None
+
     restartGuiding = False
     runGuiding = False
     
@@ -77,6 +78,7 @@ class CameraAdjuster(object):
                     print(shift)
 
                     distance_along_guide = np.dot(shift, CameraAdjuster.guide_vector) / (np.linalg.norm(CameraAdjuster.guide_vector)**2)
+                    CameraAdjuster.parallel_distance = distance_along_guide
                     print(distance_along_guide)
 
                     orthogonal_vector = shift - distance_along_guide * CameraAdjuster.guide_vector

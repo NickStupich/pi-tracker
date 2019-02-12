@@ -125,14 +125,25 @@ def stuff():
     cam = Camera()
     ca = CameraAdjuster()
     mc = MotorControl()
-    
+
+    def format_number(x):
+        if isinstance(x, tuple):
+            return '\t'.join(map(format_number, x))
+        elif x is None:
+            return 'None'
+        else:
+            return '%.1f' % x
+
     return jsonify(
         FailedTrackCount = cam.failed_track_count,
         MeanAdjustment = -1,
         MaxPixelValue = int(np.max(cam.raw_frame)),
-        OrthogonalError = CameraAdjuster.orthogonal_distance,
+        OrthogonalError = format_number(ca.orthogonal_distance),
         TrackVectorX = ca.guide_vector[0] if ca.guide_vector is not None else -1, 
         TrackVectorY = -ca.guide_vector[1] if ca.guide_vector is not None else -1,
+        StartedPosition = format_number(cam.tracker.starting_coords),
+        CurrentPosition = format_number(cam.tracker.last_coords),
+        ParallelError = format_number(ca.parallel_distance),
         )
 
 
