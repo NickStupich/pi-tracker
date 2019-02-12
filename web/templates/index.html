@@ -18,12 +18,16 @@
 
                 	$("#TrackVectorX").text(data.TrackVectorX)
                 	$("#TrackVectorY").text(data.TrackVectorY)
-                	
+
                 	$("#StartedPosition").text(data.StartedPosition)
                 	$("#CurrentPosition").text(data.CurrentPosition)
  
                 	$("#ParallelError").text(data.ParallelError)
                 	$("#OrthogonalError").text(data.OrthogonalError)
+                	$("#NewLogs").append(data.NewLogs) 
+
+                	elem = document.getElementById('NewLogs')
+				    elem.scrollTop = elem.scrollHeight;
                 });
         }
 
@@ -103,6 +107,8 @@
 		Parallel Tracking Error: <span id="ParallelError"></span></br>
 
 	</div>
+
+	<div id="NewLogs" style="height:300px;width:400px;overflow:auto;">Logs</div>
 
 
   </div>

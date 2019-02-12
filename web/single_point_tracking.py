@@ -80,6 +80,8 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
 
             else:
                 maxLoc = subPixelMaxLoc
+        except RuntimeError as re:
+            pass
 
         except Exception as e:
             print(e)

@@ -8,6 +8,24 @@ import cv2
 
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
 
+new_logs = ""
+import sys
+
+class Logger(object):
+    def __init__(self):
+        self.terminal = sys.stdout
+
+    def write(self, message):
+        self.terminal.write(message)
+        global new_logs
+        new_logs += message  
+
+
+    def flush(self):
+        self.terminal.flush()
+
+sys.stdout = Logger()
+
 
 import is_pi
 
@@ -134,6 +152,9 @@ def stuff():
         else:
             return '%.1f' % x
 
+    global new_logs
+    logs_copy = new_logs
+    new_logs = ""
     return jsonify(
         FailedTrackCount = cam.failed_track_count,
         MeanAdjustment = -1,
@@ -144,6 +165,7 @@ def stuff():
         StartedPosition = format_number(cam.tracker.starting_coords),
         CurrentPosition = format_number(cam.tracker.last_coords),
         ParallelError = format_number(ca.parallel_distance),
+        NewLogs = logs_copy,
         )
 
 
