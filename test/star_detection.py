@@ -41,7 +41,7 @@ def main():
 
 	# print(os.listdir(folder)[4278])
 
-	for i, fn in enumerate(files):
+	for i, fn in enumerate(files[500:]):
 		if i > 4000: break
 		# print(fn)
 		full_fn = os.path.join(folder, fn)
@@ -90,6 +90,20 @@ def main():
 
 	plt.show()
 
+	if 1:
+
+		fit_x = np.polyfit(t, all_positions[:, 0], 2)
+		plt.subplot(1, 2, 1)
+		plt.plot(t, all_positions[:, 0] - np.poly1d(fit_x)(t), '--.')
+		plt.title('x')
+
+		fit_y = np.polyfit(t, all_positions[:, 1], 2)
+		plt.subplot(1, 2, 2)
+		plt.plot(t, all_positions[:, 1] - np.poly1d(fit_y)(t), '--.')
+		plt.title('y')
+
+		plt.show()
+
 	# x = t
 	# y = all_positions[:, 0]
 	# y = all_positions[:, 1]
@@ -113,5 +127,62 @@ def main():
 
 	# plt.scatter(all_positions[:, 0], all_positions[:, 1]); plt.show()
 
+
+def get_mean_plot():
+	# folder = "F:/star_guiding/test_frames"
+	# folder = "D:/star_guiding/test_frames"
+	folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
+	# folder = 'F:/star_guiding/images/2019-02-05.15-27-53'
+
+	ref_position = (860, 445)
+	last_position = None#start_position
+
+	all_positions = []
+	t = []
+
+	aligned_images = []
+
+	files = list(sorted(os.listdir(folder), key = lambda s: int(s.split('.')[0])))
+
+	for i, fn in enumerate(files[500:]):
+		if i > 800: break
+		full_fn = os.path.join(folder, fn)
+		img = load_image(full_fn)
+
+		if i == 0: 
+			last_position = single_point_tracking.get_start_position2(img)
+ 	 	
+		current_position = single_point_tracking.get_current_star_location(img, last_position, subPixelFit = False)
+
+		if current_position is not None:
+			dx = ref_position[0] - current_position[0]
+			dy = ref_position[1] - current_position[1]
+
+			M = np.float32([[1,0,dx],[0,1,dy]])
+			dst = cv2.warpAffine(img,M,img.shape[::-1])
+			aligned_images.append(dst)
+
+		# plt.subplot(1, 2, 1)
+		# plt.imshow(img)
+		# plt.subplot(1, 2, 2)
+		# plt.imshow(dst)
+		# plt.show()
+
+		if current_position is not None:
+			last_position = current_position
+
+			all_positions.append(current_position)
+			t.append(i)
+		else:
+			# all_positions.append((-1, -1))
+			pass
+
+
+	aligned_images = np.array(aligned_images)
+
+	mean_image = np.mean(aligned_images, axis=0)
+	plt.imshow(np.clip(mean_image * 10, 0, 1)); plt.show()
+
 if __name__ == "__main__":
-	main()
+	# main()
+	get_mean_plot()

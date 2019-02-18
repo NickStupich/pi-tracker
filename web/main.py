@@ -5,26 +5,40 @@ from flask import Flask, render_template, Response, redirect, request
 from flask.json import jsonify
 import numpy as np
 import cv2
+import logging
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
 
 new_logs = ""
+error_logs = ""
 import sys
 
+def log_new_write(message):
+    global new_logs
+    new_logs += message  
+
+def err_new_write(message):
+    global error_logs
+    error_logs += message
+
 class Logger(object):
-    def __init__(self):
-        self.terminal = sys.stdout
+    def __init__(self, original_stream, new_write):
+        self.terminal = original_stream
+        self.new_write = new_write
 
     def write(self, message):
         self.terminal.write(message)
-        global new_logs
-        new_logs += message  
-
+        self.new_write(message)
 
     def flush(self):
         self.terminal.flush()
 
-sys.stdout = Logger()
+sys.stdout = Logger(sys.stdout, log_new_write)
+sys.stderr = Logger(sys.stderr, err_new_write)
+
 
 
 import is_pi
@@ -152,8 +166,10 @@ def stuff():
         else:
             return '%.1f' % x
 
-    global new_logs
+    global new_logs, error_logs
     logs_copy = new_logs
+    errors_copy = error_logs
+    error_logs = ""
     new_logs = ""
     return jsonify(
         FailedTrackCount = cam.failed_track_count,
@@ -166,6 +182,7 @@ def stuff():
         CurrentPosition = format_number(cam.tracker.last_coords),
         ParallelError = format_number(ca.parallel_distance),
         NewLogs = logs_copy,
+        ErrorLogs = errors_copy,
         )
 
 

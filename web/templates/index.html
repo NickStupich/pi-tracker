@@ -25,6 +25,7 @@
                 	$("#ParallelError").text(data.ParallelError)
                 	$("#OrthogonalError").text(data.OrthogonalError)
                 	$("#NewLogs").append(data.NewLogs) 
+                	$("#ErrorLogs").append(data.ErrorLogs) 
 
                 	elem = document.getElementById('NewLogs')
 				    elem.scrollTop = elem.scrollHeight;
@@ -109,6 +110,7 @@
 	</div>
 
 	<div id="NewLogs" style="height:300px;width:400px;overflow:auto;">Logs</div>
+	<div id="ErrorLogs" style="height:300px;width:400px;overflow:auto;color:red">Errors</div>
 
 
   </div>
