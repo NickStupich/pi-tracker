@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import scipy.optimize
-
+from datetime import datetime
 import is_pi
 
 if not is_pi.is_pi:
@@ -176,6 +176,10 @@ class SinglePointTracking():
     _is_tracking = False
     starting_coords = None
     
+    shift_update_time = None
+    shift_x = None
+    shift_y = None
+
     all_coords = []
 
     def __init__(self, search_img_half_size):
@@ -220,6 +224,9 @@ class SinglePointTracking():
         # print(current_location, self.last_coords)
         self.last_coords = current_location
         shift = (current_location[0] - self.starting_coords[0], current_location[1] - self.starting_coords[1])
+        self.shift_x = shift[0]
+        self.shift_y = shift[1]
+        self.shift_update_time = datetime.now()
         self.all_coords.append(current_location)
         return current_location, shift
 

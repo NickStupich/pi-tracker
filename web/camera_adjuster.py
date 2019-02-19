@@ -15,6 +15,7 @@ class CameraAdjuster(object):
 
     orthogonal_distance = None
     parallel_distance = None
+    update_time = None
 
     restartGuiding = False
     runGuiding = False
@@ -89,6 +90,8 @@ class CameraAdjuster(object):
                     adjustment = np.clip(adjustment, -0.5, 0.5)
                     
                     new_speed_adjustment = 1.0 - adjustment
+
+                    CameraAdjuster.update_time = datetime.now()
 
                 print('adjustment: ', new_speed_adjustment)
 
