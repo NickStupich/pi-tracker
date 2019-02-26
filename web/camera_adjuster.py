@@ -36,7 +36,7 @@ class CameraAdjuster(object):
             
     @classmethod
     def _thread(cls, camera):
-        seconds_for_vector = 10
+        seconds_for_vector = 20
         adjustment_target_seconds = 3
         mc = MotorControl()
 

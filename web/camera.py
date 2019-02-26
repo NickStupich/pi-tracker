@@ -6,7 +6,7 @@ import cv2
 base_shutter_speed = 100
 
 def load_image(filename):
-	# print('loading ', filename)
+	print('loading ', filename)
 	result = cv2.imread(filename, 0)
 
 	# f_ratio = 0.5
@@ -21,10 +21,14 @@ class Camera(BaseCamera):
 
         # folder = 'F:/star_guiding/test_frames'
         # folder = 'D:/star_guiding/test_frames'
-        folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
+        folder = "/home/pi/projects/pi-tracker/web/images/2019-02-05.15-27-53"
+        #folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
 
         # filenames = list(map(lambda s2: os.path.join(folder, s2), filter(lambda s: s.startswith('IMG'), os.listdir(folder))))
         filenames = list(map(lambda s2: os.path.join(folder, s2), os.listdir(folder)))
+        filenames = sorted(filenames, key = lambda s: int(s.split('/')[-1].split('.')[0]))
+
+        filenames = filenames[:100]
         imgs = [None for file in filenames]
 
         count = 0
