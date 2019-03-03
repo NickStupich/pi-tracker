@@ -6,6 +6,7 @@ from flask.json import jsonify
 import numpy as np
 import cv2
 import logging
+from datetime import datetime
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -173,7 +174,7 @@ def stuff():
     new_logs = ""
     return jsonify(
         FailedTrackCount = cam.failed_track_count,
-        MeanAdjustment = -1,
+        MeanAdjustment = str(mc.tracking_factor),
         MaxPixelValue = int(np.max(cam.raw_frame)),
         TrackVectorX = ca.guide_vector[0] if ca.guide_vector is not None else -1, 
         TrackVectorY = -ca.guide_vector[1] if ca.guide_vector is not None else -1,
@@ -185,6 +186,8 @@ def stuff():
         ShiftX = cam.tracker.shift_x,
         ShiftY = cam.tracker.shift_y,
         ShiftUpdateTime = str(cam.tracker.shift_update_time),
+        CurrentAdjustment = str(mc.tracking_factor),
+        AdjustmentUpdateTime = str(datetime.now()),
         NewLogs = logs_copy,
         ErrorLogs = errors_copy,
         )

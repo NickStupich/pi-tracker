@@ -13,6 +13,7 @@
 
 		previousErrorUpdateTime = "";
 		previousShiftUpdateTime = "";
+		previousAdjustmentUpdateTime = "";
 
 		function update_values() {
 	        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
@@ -56,6 +57,16 @@
 				    		orthErr = parseFloat(data.OrthogonalError);
 				    		updateErrorChart(parErr, orthErr);
 				    		previousErrorUpdateTime = errorUpdateTime;
+				    	}
+				    }
+
+
+				    adjustmentUpdateTime = data.AdjustmentUpdateTime
+				    if(data.CurrentAdjustment != "None") {
+				    	if(previousAdjustmentUpdateTime != adjustmentUpdateTime) {
+				    		adjustment = parseFloat(data.CurrentAdjustment);
+				    		updateAdjustmentChart(adjustment);
+				    		previousAdjustmentUpdateTime = adjustmentUpdateTime;
 				    	}
 				    }
 
@@ -156,6 +167,46 @@
 		};
 
 
+
+
+		var dpsAdjustment = [];
+
+		var adjustmentChart = new CanvasJS.Chart("adjustmentChartContainer", {
+			title :{
+				text: "Adjustments"
+			},
+			axisY: [{
+				title : "X", 
+				includeZero: false
+			}, {
+				title : "Y", 
+				includeZero: false
+			}
+			],      
+			data: [{
+				type: "line",
+				axisYIndex : 0, 
+				showInLegend : true,
+				legendText : "Adj",
+				dataPoints: dpsAdjustment
+			}]
+		});
+
+		var tAdjustment = 0;
+		var updateAdjustmentChart = function (adjustment) {
+
+			dpsAdjustment.push({x:tAdjustment, y:adjustment});
+			tAdjustment++;
+
+			if (dpsAdjustment.length > dataLength) {
+				dpsAdjustment.shift();
+			}
+
+			adjustmentChart.render();
+		};
+
+
+
         setInterval(update_values, 1000);
 		}
 
@@ -252,6 +303,7 @@
 
 <div id="errorChartContainer" style="height: 370px; width:700px;"></div>
 <div id="shiftChartContainer" style="height: 370px; width:700px;"></div>
+<div id="adjustmentChartContainer" style="height: 370px; width:700px;"></div>
 	
 
   </body>

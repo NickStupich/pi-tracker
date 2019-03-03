@@ -21,7 +21,7 @@ class Camera(BaseCamera):
 
         # folder = 'F:/star_guiding/test_frames'
         # folder = 'D:/star_guiding/test_frames'
-        folder = 'D:/star_guiding/images/2019-02-05.15-27-53'
+        folder = 'D:/star_guiding/images/2019-02-25.18-18-55'
 
         # filenames = list(map(lambda s2: os.path.join(folder, s2), filter(lambda s: s.startswith('IMG'), os.listdir(folder))))
         filenames = list(map(lambda s2: os.path.join(folder, s2), os.listdir(folder)))
