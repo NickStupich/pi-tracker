@@ -68,6 +68,7 @@ class ShutterSpeedForm(Form):
     visual_gain = IntegerField('Visual Gain:')
     overlay_tracking_history = BooleanField('Overlay tracking history')
     subPixelFit = BooleanField('Sub Pixel Fit')
+    ema_factor = FloatField('Ema factor:')
 
 @app.route('/')
 def index():
@@ -78,6 +79,7 @@ def index():
     shutterSpeedForm.visual_gain.data = Camera.visual_gain
     shutterSpeedForm.overlay_tracking_history.data = Camera.overlay_tracking_history
     shutterSpeedForm.subPixelFit.data = Camera.subPixelFit
+    shutterSpeedForm.ema_factor.data = MotorControl.ema_factor
 
     return render_template('index.html', camSettingsForm = shutterSpeedForm)
 
@@ -89,7 +91,9 @@ def changeSettings():
     save = (request.form['save'] == 'y') if 'save' in request.form else False
     overlay_tracking_history = (request.form['overlay_tracking_history'] == 'y') if 'overlay_tracking_history' in request.form else False
     subPixelFit = (request.form['subPixelFit'] == 'y') if 'subPixelFit' in request.form else False
+    ema_factor = float(request.form['ema_factor'])
     Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
+    MotorControl().set_ema_factor(ema_factor)
     return redirect('/')
 
 @app.route('/startRestartTracking', methods=['POST'])
@@ -187,6 +191,7 @@ def stuff():
         ShiftY = cam.tracker.shift_y,
         ShiftUpdateTime = str(cam.tracker.shift_update_time),
         CurrentAdjustment = str(mc.tracking_factor),
+        SmoothedAdjustment = str(mc.smoothed_tracking_factor),
         AdjustmentUpdateTime = str(datetime.now()),
         NewLogs = logs_copy,
         ErrorLogs = errors_copy,

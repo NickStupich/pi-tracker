@@ -65,7 +65,8 @@
 				    if(data.CurrentAdjustment != "None") {
 				    	if(previousAdjustmentUpdateTime != adjustmentUpdateTime) {
 				    		adjustment = parseFloat(data.CurrentAdjustment);
-				    		updateAdjustmentChart(adjustment);
+				    		smoothedAdjustment = parseFloat(data.SmoothedAdjustment);
+				    		updateAdjustmentChart(adjustment, smoothedAdjustment);
 				    		previousAdjustmentUpdateTime = adjustmentUpdateTime;
 				    	}
 				    }
@@ -167,39 +168,41 @@
 		};
 
 
-
-
 		var dpsAdjustment = [];
+		var dpsSmoothedAdjustment = [];
 
 		var adjustmentChart = new CanvasJS.Chart("adjustmentChartContainer", {
 			title :{
 				text: "Adjustments"
 			},
 			axisY: [{
-				title : "X", 
-				includeZero: false
-			}, {
-				title : "Y", 
+				title : "Factor", 
 				includeZero: false
 			}
 			],      
 			data: [{
-				type: "line",
-				axisYIndex : 0, 
+				type: "line", 
 				showInLegend : true,
-				legendText : "Adj",
+				legendText : "Adjustment",
 				dataPoints: dpsAdjustment
+			}, {
+				type: "line",
+				showInLegend : true,
+				legendText : "Smoothed",
+				dataPoints: dpsSmoothedAdjustment
 			}]
 		});
 
 		var tAdjustment = 0;
-		var updateAdjustmentChart = function (adjustment) {
+		var updateAdjustmentChart = function (adjustment, smoothedAdjustment) {
 
 			dpsAdjustment.push({x:tAdjustment, y:adjustment});
+			dpsSmoothedAdjustment.push({x:tAdjustment, y:smoothedAdjustment});
 			tAdjustment++;
 
 			if (dpsAdjustment.length > dataLength) {
 				dpsAdjustment.shift();
+				dpsSmoothedAdjustment.shift();
 			}
 
 			adjustmentChart.render();
@@ -234,6 +237,9 @@
     <div class="checkbox">
 			{{ camSettingsForm.subPixelFit.label }} {{ camSettingsForm.subPixelFit }} </div>
 	        
+	<div class="input text">
+			{{ camSettingsForm.ema_factor.label }} {{ camSettingsForm.ema_factor }} </div>
+
 	<div class="input submit">
 	                <input type="submit" value="Update"></div>
 	</form>
