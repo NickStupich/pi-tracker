@@ -83,6 +83,8 @@ class MotorControl(object):
     thread = None
     adjustment_factor = 1.0
     tracking_factor = 1.0
+    smoothed_tracking_factor = 1.0
+    ema_factor = 0.0
     _kill = False
     _movement_enabled = True
     _restart_movement = False
@@ -107,7 +109,12 @@ class MotorControl(object):
 
     def set_tracking_factor(self, factor):
         MotorControl.tracking_factor = factor
+        MotorControl.smoothed_tracking_factor = MotorControl.smoothed_tracking_factor * MotorControl.ema_factor + factor * (1 - MotorControl.ema_factor)
         MotorControl.event.set()
+
+    def set_ema_factor(self, ema):
+        MotorControl.ema_factor = ema
+        # print('new ema factor: ', ema)
 
     @classmethod
     def _thread(cls):
@@ -129,7 +136,7 @@ class MotorControl(object):
             print('updating...')
             if MotorControl._movement_enabled:
                 
-                frequency = steps_per_second / (MotorControl.adjustment_factor * MotorControl.tracking_factor)
+                frequency = steps_per_second / (MotorControl.adjustment_factor * MotorControl.smoothed_tracking_factor)
                 print('frequency: ', frequency)
                 output_step.value = 0.5
                 output_step.frequency = frequency
