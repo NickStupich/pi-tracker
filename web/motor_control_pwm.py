@@ -15,9 +15,10 @@ step_pin = 3
 microstep_pin = 2
 
 
-import is_pi
+#import is_pi
 
-if is_pi.is_pi:
+#if is_pi.is_pi:
+if True:
     from gpiozero import LED, PWMLED
 else:
     class PWMLED(object):
@@ -91,6 +92,7 @@ class MotorControl(object):
     event = MotorEvent()
     
     def __init__(self):
+        print('initializing motor_control_pwm')
         if MotorControl.thread is None:
             MotorControl.thread = threading.Thread(target=self._thread)
             MotorControl.thread.start()

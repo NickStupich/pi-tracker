@@ -7,6 +7,9 @@ import numpy as np
 import cv2
 import logging
 from datetime import datetime
+from pubsub import pub
+import messages
+import time
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -41,24 +44,12 @@ sys.stdout = Logger(sys.stdout, log_new_write)
 sys.stderr = Logger(sys.stderr, err_new_write)
 
 
+import camera
 
-import is_pi
 
-# import camera driver
-if os.environ.get('CAMERA'):
-    Camera = import_module('camera_' + os.environ['CAMERA']).Camera
-else:
-    if is_pi.is_pi:
-        from camera_pi import Camera
-    else:
-        from camera import Camera
     
-#from motor_control_pwm import MotorControl
-from motor_control_l6470 import MotorControl
-from camera_adjuster import CameraAdjuster
-
-# Raspberry Pi camera module (requires picamera package)
-# from camera_pi import Camera
+cam = camera.Camera()
+cam.start()
 
 app = Flask(__name__)
 
@@ -75,12 +66,12 @@ class ShutterSpeedForm(Form):
 def index():
     
     shutterSpeedForm = ShutterSpeedForm()
-    shutterSpeedForm.speed.data = Camera.shutter_speed_ms
-    shutterSpeedForm.save.data = Camera.save_images
-    shutterSpeedForm.visual_gain.data = Camera.visual_gain
-    shutterSpeedForm.overlay_tracking_history.data = Camera.overlay_tracking_history
-    shutterSpeedForm.subPixelFit.data = Camera.subPixelFit
-    shutterSpeedForm.ema_factor.data = MotorControl.ema_factor
+    shutterSpeedForm.speed.data = cam.shutter_speed_ms
+    shutterSpeedForm.save.data = 0#Camera.save_images
+    shutterSpeedForm.visual_gain.data = 0#Camera.visual_gain
+    shutterSpeedForm.overlay_tracking_history.data = 0#Camera.overlay_tracking_history
+    shutterSpeedForm.subPixelFit.data = 0#Camera.subPixelFit
+    shutterSpeedForm.ema_factor.data = 0# MotorControl.ema_factor
 
     return render_template('index.html', camSettingsForm = shutterSpeedForm)
 
@@ -93,8 +84,9 @@ def changeSettings():
     overlay_tracking_history = (request.form['overlay_tracking_history'] == 'y') if 'overlay_tracking_history' in request.form else False
     subPixelFit = (request.form['subPixelFit'] == 'y') if 'subPixelFit' in request.form else False
     ema_factor = float(request.form['ema_factor'])
-    Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
-    MotorControl().set_ema_factor(ema_factor)
+    #Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
+    pub.sendMessage(messages.SET_SHUTTER_SPEED, new_speed_ms = newSpeed)
+    #MotorControl().set_ema_factor(ema_factor)
     return redirect('/')
 
 @app.route('/startRestartTracking', methods=['POST'])
@@ -111,8 +103,69 @@ def stopTracking():
     return redirect('/')
 
 
+hasNewImage = False
+newImageContent = None
+max_pixel_value = 0
+@app.route('/video_feed')
+def video_feed():
+    def gen():
+        global hasNewImage, newImageContent
+        hasNewImage = False
+        def new_frame_listener(frame):
+            global hasNewImage, newImageContent, max_pixel_value
+            max_pixel_value = np.max(frame)
+            if not hasNewImage:
+                ret, jpeg = cv2.imencode('.jpg', frame)
+                
+                newImageContent = (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+                       
+                hasNewImage = True
+            
+        pub.subscribe(new_frame_listener, messages.NEW_IMAGE_FRAME)
+        
+        while 1:
+            if hasNewImage:
+                hasNewImage = False
+                yield newImageContent
+            else:
+                time.sleep(0.1)
+    
+    return Response(gen(), 
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+hasNewSubImage = False
+newSubImageContent = None
+@app.route('/subimg_video_feed')
+def subimg_video_feed():
+    def gen():
+        global hasNewSubImage, newSubImageContent
+        hasNewSubImage = False
+        def new_subimg_listener(frame):
+            global hasNewSubImage, newSubImageContent
+            if not hasNewSubImage:
+                ret, jpeg = cv2.imencode('.jpg', frame)
+                
+                newSubImageContent = (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+                       
+                hasNewSubImage = True
+            
+        pub.subscribe(new_subimg_listener, messages.NEW_SUB_IMAGE_FRAME)
+        
+        while 1:
+            if hasNewSubImage:
+                hasNewSubImage = False
+                yield newSubImageContent
+            else:
+                time.sleep(0.1)
+    
+    return Response(gen(), 
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+"""
 def gen(camera_func):
-    """Video streaming generator function."""
+    #Video streaming generator function.
     while True:
         raw_frame, shift = camera_func()
 
@@ -136,7 +189,7 @@ def subimg_video_feed():
 
     return Response(gen(cam.get_subimg_frame),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
-
+"""
 @app.route('/disable_movement', methods=['POST'])
 def disable_movement():
     mc = MotorControl()
@@ -159,10 +212,10 @@ def start_following():
 
 @app.route('/updates', methods= ['GET'])
 def stuff():
-
-    cam = Camera()
-    ca = CameraAdjuster()
-    mc = MotorControl()
+    print('/updates')
+    #cam = Camera()
+    #ca = CameraAdjuster()
+    #mc = MotorControl()
 
     def format_number(x):
         if isinstance(x, tuple):
@@ -173,26 +226,27 @@ def stuff():
             return '%.1f' % x
 
     global new_logs, error_logs
+    global max_pixel_value
     logs_copy = new_logs
     errors_copy = error_logs
     error_logs = ""
     new_logs = ""
     return jsonify(
-        FailedTrackCount = cam.failed_track_count,
-        MeanAdjustment = str(mc.tracking_factor),
-        MaxPixelValue = int(np.max(cam.raw_frame)),
-        TrackVectorX = ca.guide_vector[0] if ca.guide_vector is not None else -1, 
-        TrackVectorY = -ca.guide_vector[1] if ca.guide_vector is not None else -1,
-        StartedPosition = format_number(cam.tracker.starting_coords),
-        CurrentPosition = format_number(cam.tracker.last_coords),
-        ParallelError = format_number(ca.parallel_distance),
-        OrthogonalError = format_number(ca.orthogonal_distance),
-        ErrorUpdateTime = str(ca.update_time),
-        ShiftX = cam.tracker.shift_x,
-        ShiftY = cam.tracker.shift_y,
-        ShiftUpdateTime = str(cam.tracker.shift_update_time),
-        CurrentAdjustment = str(mc.tracking_factor),
-        SmoothedAdjustment = str(mc.smoothed_tracking_factor),
+        FailedTrackCount = 7,#cam.failed_track_count,
+        MeanAdjustment = str(7),#mc.tracking_factor),
+        MaxPixelValue = str(max_pixel_value),
+        TrackVectorX = 7,#ca.guide_vector[0] if ca.guide_vector is not None else -1, 
+        TrackVectorY = 7,#-ca.guide_vector[1] if ca.guide_vector is not None else -1,
+        StartedPosition = format_number(7),#cam.tracker.starting_coords),
+        CurrentPosition = format_number(7),#cam.tracker.last_coords),
+        ParallelError = format_number(7),#ca.parallel_distance),
+        OrthogonalError = format_number(7),#ca.orthogonal_distance),
+        ErrorUpdateTime = str(7),#ca.update_time),
+        ShiftX = 7,#cam.tracker.shift_x,
+        ShiftY = 7,#cam.tracker.shift_y,
+        ShiftUpdateTime = str(7),#cam.tracker.shift_update_time),
+        CurrentAdjustment = str(7),#mc.tracking_factor),
+        SmoothedAdjustment = str(7),#mc.smoothed_tracking_factor),
         AdjustmentUpdateTime = str(datetime.now()),
         NewLogs = logs_copy,
         ErrorLogs = errors_copy,
@@ -206,7 +260,4 @@ def stop_following():
     return redirect('/')
 
 if __name__ == '__main__':
-    cam = Camera()
-    ca = CameraAdjuster(cam)
-    mc = MotorControl()
     app.run(host='0.0.0.0', threaded=True)
