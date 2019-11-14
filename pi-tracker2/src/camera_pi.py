@@ -6,6 +6,8 @@ import redis
 import messages
 import threading
 import datetime
+import redis
+import redis_helpers
 
 r = redis.StrictRedis(host='localhost', port=6379) 
 
@@ -13,8 +15,6 @@ class Camera(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         
-        pub.subscribe(self.stop_listener, messages.STOP_ALL)
-        pub.subscribe(self.set_shutter_speed, messages.SET_SHUTTER_SPEED)
         self.keepRunning=True
         
         camera = mo.MMALCamera()
@@ -34,7 +34,16 @@ class Camera(threading.Thread):
         self.camera = camera
 
 
-        self.set_shutter_speed(10)
+        self.set_shutter_speed(100)
+                
+        p = r.pubsub(ignore_subscribe_messages=True)
+
+        def stop_all_handler(message):
+            print('got stop_all message')
+            self.keepRunning = False
+        p.subscribe(**{messages.STOP_ALL:stop_all_handler})
+
+        self.thread = p.run_in_thread(sleep_time = 0.01)
 
 
     def run(self):
@@ -45,6 +54,8 @@ class Camera(threading.Thread):
         
         self.camera.outputs[0].disable()
         print('shut down camera')
+        
+        self.thread.stop()
         
     def set_shutter_speed(self, new_speed_ms):
         self.shutter_speed_ms = new_speed_ms
@@ -57,8 +68,9 @@ class Camera(threading.Thread):
             bw_img = img[:, :, 1]
             
             # pub.sendMessage(messages.NEW_IMAGE_FRAME, frame=bw_img)
-            r.publish(messages.NEW_IMAGE_FRAME, bw_img)
-
+            #r.publish(messages.NEW_IMAGE_FRAME, bw_img)
+            
+            r.publish(messages.NEW_IMAGE_FRAME, redis_helpers.toRedis(bw_img))
             #if filtered_image is None:
             #    filtered_image = bw_img.copy()
             #else:
@@ -87,15 +99,27 @@ def test():
     start = datetime.datetime.now()
     p.subscribe(messages.NEW_IMAGE_FRAME)
 
-    while (datetime.now() - start).total_seconds() < 10:
+    while (datetime.datetime.now() - start).total_seconds() < 10:
+        # print((datetime.datetime.now() - start).total_seconds())
         message = p.get_message()
-        command = message['data']
+        if message:
+            # print(message)
+            channel = message['channel']
+            data = message['data']
+            msg_type = message['type']
+            print(channel, msg_type)
+            if 'message' in msg_type:
+                img = redis_helpers.fromRedis(data, np.uint8)
+                print(img.shape)
 
-        time.sleep(1)
+                test_get_image(img)
+            # print(dir(message))
+
+        time.sleep(0.1)
 
     # time.sleep(10)
     
-    r.publish(messages.STOP_ALL)
+    r.publish(messages.STOP_ALL, "")
 
 if __name__ == "__main__":
     test()
