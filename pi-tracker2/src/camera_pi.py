@@ -2,9 +2,12 @@ from picamera import mmal, mmalobj as mo
 import time
 import numpy as np
 import cv2
-from pubsub import pub
+import redis
 import messages
 import threading
+import datetime
+
+r = redis.StrictRedis(host='localhost', port=6379) 
 
 class Camera(threading.Thread):
     def __init__(self):
@@ -33,6 +36,7 @@ class Camera(threading.Thread):
 
         self.set_shutter_speed(10)
 
+
     def run(self):
         self.camera.outputs[0].enable(self.image_callback)
        
@@ -52,7 +56,8 @@ class Camera(threading.Thread):
             img = np.frombuffer(buf.data, dtype=np.uint8).reshape(1088, 1920, 3)
             bw_img = img[:, :, 1]
             
-            pub.sendMessage(messages.NEW_IMAGE_FRAME, frame=bw_img)
+            # pub.sendMessage(messages.NEW_IMAGE_FRAME, frame=bw_img)
+            r.publish(messages.NEW_IMAGE_FRAME, bw_img)
 
             #if filtered_image is None:
             #    filtered_image = bw_img.copy()
@@ -77,11 +82,20 @@ def test():
             cv2.imshow("test image", frame)
             cv2.waitKey(1)
             
-    pub.subscribe(test_get_image, messages.NEW_IMAGE_FRAME)
+    # pub.subscribe(test_get_image, messages.NEW_IMAGE_FRAME)
+    p = r.pubsub()
+    start = datetime.datetime.now()
+    p.subscribe(messages.NEW_IMAGE_FRAME)
+
+    while (datetime.now() - start).total_seconds() < 10:
+        message = p.get_message()
+        command = message['data']
+
+        time.sleep(1)
+
+    # time.sleep(10)
     
-    time.sleep(10)
-    
-    pub.sendMessage(messages.STOP_ALL)
+    r.publish(messages.STOP_ALL)
 
 if __name__ == "__main__":
     test()

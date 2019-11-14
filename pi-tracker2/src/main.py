@@ -7,9 +7,11 @@ import numpy as np
 import cv2
 import logging
 from datetime import datetime
-from pubsub import pub
+# from pubsub import pub
 import messages
 import time
+import redis_helpers
+import redis
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -53,6 +55,7 @@ cam = camera.Camera()
 cam.start()
 
 app = Flask(__name__)
+r = redis.StrictRedis(host='localhost', port=6379) 
 
 
 class ShutterSpeedForm(Form):
@@ -86,7 +89,10 @@ def changeSettings():
     subPixelFit = (request.form['subPixelFit'] == 'y') if 'subPixelFit' in request.form else False
     ema_factor = float(request.form['ema_factor'])
     #Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
-    pub.sendMessage(messages.SET_SHUTTER_SPEED, new_speed_ms = newSpeed)
+    
+    #TODO
+    # pub.sendMessage(messages.SET_SHUTTER_SPEED, new_speed_ms = newSpeed)
+    
     #MotorControl().set_ema_factor(ema_factor)
     return redirect('/')
 
@@ -110,27 +116,44 @@ max_pixel_value = 0
 @app.route('/video_feed')
 def video_feed():
     def gen():
-        global hasNewImage, newImageContent
-        hasNewImage = False
-        def new_frame_listener(frame):
-            global hasNewImage, newImageContent, max_pixel_value
-            max_pixel_value = np.max(frame)
-            if not hasNewImage:
-                ret, jpeg = cv2.imencode('.jpg', frame)
+        # global hasNewImage, newImageContent
+        # hasNewImage = False
+        # def new_frame_listener(frame):
+        #     global hasNewImage, newImageContent, max_pixel_value
+        #     max_pixel_value = np.max(frame)
+        #     if not hasNewImage:
+        #         ret, jpeg = cv2.imencode('.jpg', frame)
                 
+        #         newImageContent = (b'--frame\r\n'
+        #                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+                       
+        #         hasNewImage = True
+            
+        #pub.subscribe(new_frame_listener, messages.NEW_IMAGE_FRAME)
+        p = r.pubsub(ignore_subscribe_messages=True)
+        p.subscribe(messages.NEW_IMAGE_FRAME)
+
+        for message in p.listen():
+
+            msg_type = message['type']
+            if 'message' in msg_type:
+                data = message['data']
+                img = redis_helpers.fromRedis(data, np.uint8)
+
+                ret, jpeg = cv2.imencode('.jpg', img)
                 newImageContent = (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
-                       
-                hasNewImage = True
-            
-        pub.subscribe(new_frame_listener, messages.NEW_IMAGE_FRAME)
-        
-        while 1:
-            if hasNewImage:
-                hasNewImage = False
+
                 yield newImageContent
-            else:
-                time.sleep(0.1)
+
+        # while 1:
+        #     if hasNewImage:
+        #         hasNewImage = False
+        #         yield newImageContent
+        #     else:
+        #         time.sleep(0.1)
+
+
     
     return Response(gen(), 
                     mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -140,25 +163,25 @@ newSubImageContent = None
 @app.route('/subimg_video_feed')
 def subimg_video_feed():
     def gen():
-        global hasNewSubImage, newSubImageContent
-        hasNewSubImage = False
-        def new_subimg_listener(frame):
-            global hasNewSubImage, newSubImageContent
-            if not hasNewSubImage:
-                ret, jpeg = cv2.imencode('.jpg', frame)
+        # global hasNewSubImage, newSubImageContent
+        # hasNewSubImage = False
+        # def new_subimg_listener(frame):
+        #     global hasNewSubImage, newSubImageContent
+        #     if not hasNewSubImage:
+        #         ret, jpeg = cv2.imencode('.jpg', frame)
                 
-                newSubImageContent = (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+        #         newSubImageContent = (b'--frame\r\n'
+        #                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
                        
-                hasNewSubImage = True
+        #         hasNewSubImage = True
             
-        pub.subscribe(new_subimg_listener, messages.NEW_SUB_IMAGE_FRAME)
+        # # pub.subscribe(new_subimg_listener, messages.NEW_SUB_IMAGE_FRAME)
         
-        while 1:
-            if hasNewSubImage:
-                hasNewSubImage = False
-                yield newSubImageContent
-            else:
+        # while 1:
+        #     if hasNewSubImage:
+        #         hasNewSubImage = False
+        #         yield newSubImageContent
+        #     else:
                 time.sleep(0.1)
     
     return Response(gen(), 
@@ -262,3 +285,6 @@ def stop_following():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', threaded=True)
+
+    r.publish(messages.STOP_ALL, "now!")
+    print('all done')
