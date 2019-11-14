@@ -44,7 +44,8 @@ sys.stdout = Logger(sys.stdout, log_new_write)
 sys.stderr = Logger(sys.stderr, err_new_write)
 
 
-import camera
+# import camera_pi as camera
+import camera_files as camera
 
 
     
