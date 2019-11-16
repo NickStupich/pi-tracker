@@ -4,8 +4,9 @@ import struct
 import redis
 import numpy as np
 
+"""
 def toRedis(a):
-   """Store given Numpy array 'a' in Redis under key 'n'"""
+   #Store given Numpy array 'a' in Redis under key 'n'
    h, w = a.shape
    shape = struct.pack('>II',h,w)
    encoded = shape + a.tobytes()
@@ -13,11 +14,19 @@ def toRedis(a):
    return encoded
 
 def fromRedis(encoded, dtype):
-   """Retrieve Numpy array from Redis key 'n'"""
+   #Retrieve Numpy array from Redis key 'n'
    # encoded = r.get(n)
    h, w = struct.unpack('>II',encoded[:8])
    a = np.frombuffer(encoded, dtype=np.uint8, offset=8).reshape(h,w)
    return a
+"""
+import pickle
+
+def toRedis(a):
+   return pickle.dumps(a)
+
+def fromRedis(encoded):
+   return pickle.loads(encoded)
 
 
 def test():

@@ -33,7 +33,6 @@ class Camera(threading.Thread):
         
         self.camera = camera
 
-
         self.set_shutter_speed(100)
                 
         p = r.pubsub(ignore_subscribe_messages=True)
@@ -65,21 +64,14 @@ class Camera(threading.Thread):
         #TODO: smoothing of multiple images. if needed?
         if len(buf.data) > 0:
             img = np.frombuffer(buf.data, dtype=np.uint8).reshape(1088, 1920, 3)
+
+            #TODO: average?
             bw_img = img[:, :, 1]
             
-            # pub.sendMessage(messages.NEW_IMAGE_FRAME, frame=bw_img)
-            #r.publish(messages.NEW_IMAGE_FRAME, bw_img)
-            
             r.publish(messages.NEW_IMAGE_FRAME, redis_helpers.toRedis(bw_img))
-            #if filtered_image is None:
-            #    filtered_image = bw_img.copy()
-            #else:
-                #filtered_image = filtered_image * ema + bw_img 
-            #    filtered_image = bw_img.copy()
-            #cv2.imshow('image', img)
-            #cv2.imshow('image', filtered_image)
-            #cv2.imshow('image', bw_img)
-            #cv2.waitKey(1)
+
+            max_value = np.max(bw_img)
+            r.publish(messages.STATUS_MAX_PIXEL_VALUE, redis_helpers.toRedis(max_value))
 
         return False
     
@@ -93,32 +85,23 @@ def test():
     def test_get_image(frame):
             cv2.imshow("test image", frame)
             cv2.waitKey(1)
-            
-    # pub.subscribe(test_get_image, messages.NEW_IMAGE_FRAME)
-    p = r.pubsub()
+
+    p = r.pubsub(ignore_subscribe_messages=True)
     start = datetime.datetime.now()
     p.subscribe(messages.NEW_IMAGE_FRAME)
 
     while (datetime.datetime.now() - start).total_seconds() < 10:
-        # print((datetime.datetime.now() - start).total_seconds())
         message = p.get_message()
         if message:
-            # print(message)
             channel = message['channel']
             data = message['data']
             msg_type = message['type']
-            print(channel, msg_type)
-            if 'message' in msg_type:
-                img = redis_helpers.fromRedis(data, np.uint8)
-                print(img.shape)
-
-                test_get_image(img)
-            # print(dir(message))
+            
+            img = redis_helpers.fromRedis(data, np.uint8)
+            test_get_image(img)
 
         time.sleep(0.1)
 
-    # time.sleep(10)
-    
     r.publish(messages.STOP_ALL, "")
 
 if __name__ == "__main__":
