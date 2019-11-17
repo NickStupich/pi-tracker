@@ -8,13 +8,11 @@ import redis
 import datetime
 import redis_helpers
 
-BASE_SHUTTER_SPEED_MS = 10
+BASE_SHUTTER_SPEED_MS = 100
 r = redis.StrictRedis(host='localhost', port=6379) 
 
 def load_image(filename):
-    # print('loading ', filename)
     result = cv2.imread(filename, 0)
-
     return result
 
 class Camera(threading.Thread):
@@ -23,7 +21,7 @@ class Camera(threading.Thread):
         p = r.pubsub(ignore_subscribe_messages=True)
 
         self.keepRunning=True
-        self.set_shutter_speed(10)
+        self.set_shutter_speed(100)
 
         def stop_all_handler(message):
             print('got stop_all message')

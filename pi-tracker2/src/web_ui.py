@@ -62,9 +62,9 @@ class ShutterSpeedForm(Form):
 def index():
     
     shutterSpeedForm = ShutterSpeedForm()
-    shutterSpeedForm.speed.data = 7#cam.shutter_speed_ms
+    shutterSpeedForm.speed.data = updates.getParameter(messages.CMD_SET_SHUTTER_SPEED)
     shutterSpeedForm.save.data = 0#Camera.save_images
-    shutterSpeedForm.visual_gain.data = 0#Camera.visual_gain
+    shutterSpeedForm.visual_gain.data = updates.getParameter(messages.CMD_SET_VISUAL_GAIN)
     shutterSpeedForm.overlay_tracking_history.data = 0#Camera.overlay_tracking_history
     shutterSpeedForm.subPixelFit.data = 0#Camera.subPixelFit
     shutterSpeedForm.ema_factor.data = 0# MotorControl.ema_factor
@@ -82,8 +82,8 @@ def changeSettings():
     ema_factor = float(request.form['ema_factor'])
     #Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
     
-    #TODO
-    # pub.sendMessage(messages.SET_SHUTTER_SPEED, new_speed_ms = newSpeed)
+    r.publish(messages.CMD_SET_SHUTTER_SPEED, redis_helpers.toRedis(newSpeed))
+    r.publish(messages.CMD_SET_VISUAL_GAIN, redis_helpers.toRedis(newVisualGain))
     
     #MotorControl().set_ema_factor(ema_factor)
     return redirect('/')
@@ -108,22 +108,21 @@ def gen_frame(msg_type):
 
     for message in p.listen():
         data = message['data']
-        img = redis_helpers.fromRedis(data)
+        jpeg_bytes = redis_helpers.fromRedis(data)
 
-        ret, jpeg = cv2.imencode('.jpg', img)
         newImageContent = (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + jpeg_bytes + b'\r\n')
 
         yield newImageContent
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen_frame(messages.NEW_IMAGE_FRAME), 
+    return Response(gen_frame(messages.NEW_PREVIEW_FRAME), 
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/subimg_video_feed')
 def subimg_video_feed():
-    return Response(gen_frame(messages.NEW_SUB_IMAGE_FRAME), 
+    return Response(gen_frame(messages.NEW_SUB_PREVIEW_FRAME), 
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/disable_movement', methods=['POST'])
@@ -140,8 +139,7 @@ def enable_movement():
 @app.route('/start_following', methods=['POST'])
 def start_following():
 
-    # ca = CameraAdjuster()
-    # ca.start_guiding()
+    r.publish(messages.CMD_START_GUIDING, "")
     return redirect('/')
 
 @app.route('/updates', methods= ['GET'])
@@ -158,8 +156,7 @@ def update_status():
 
 @app.route('/stop_following', methods=['POST'])
 def stop_following():
-    # ca = CameraAdjuster()
-    # ca.stop_guiding()
+    r.publish(messages.CMD_STOP_GUIDING, "")
     return redirect('/')
 
 def run():

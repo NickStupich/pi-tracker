@@ -37,10 +37,8 @@ class Camera(threading.Thread):
                 
         p = r.pubsub(ignore_subscribe_messages=True)
 
-        def stop_all_handler(message):
-            print('got stop_all message')
-            self.keepRunning = False
-        p.subscribe(**{messages.STOP_ALL:stop_all_handler})
+        p.subscribe(**{messages.STOP_ALL:stop_all_handler,
+                        messages.CMD_SET_SHUTTER_SPEED : self.set_shutter_speed})
 
         self.thread = p.run_in_thread(sleep_time = 0.01)
 
@@ -55,9 +53,13 @@ class Camera(threading.Thread):
         print('shut down camera')
         
         self.thread.stop()
+
+    def stop_all_handler(self, message):
+        print('got stop_all message')
+        self.keepRunning = False
         
-    def set_shutter_speed(self, new_speed_ms):
-        self.shutter_speed_ms = new_speed_ms
+    def set_shutter_speed(self, message):
+        self.shutter_speed_ms = redis_helpers.fromRedis(message['data'])
         self.camera.control.params[mmal.MMAL_PARAMETER_SHUTTER_SPEED] = new_speed_ms * 1000
         
     def image_callback(self, port, buf):

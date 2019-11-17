@@ -15,6 +15,8 @@ class UpdatesListener(object):
         self.add_parameter(messages.STATUS_MAX_PIXEL_VALUE, -1)
         self.add_parameter(messages.STATUS_CURRENT_TRACKING_POSITION, "")
         self.add_parameter(messages.STATUS_STARTING_TRACKING_POSITION, "")
+        self.add_parameter(messages.CMD_SET_SHUTTER_SPEED, 100)
+        self.add_parameter(messages.CMD_SET_VISUAL_GAIN, 10)
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler})
         self.thread = self.p.run_in_thread(sleep_time = 0.1)
 
@@ -30,6 +32,9 @@ class UpdatesListener(object):
 
         #TODO: format better?
         self.current_values[str(channel)] = str(raw_data)
+
+    def getParameter(self, key):
+        return self.current_values[key]
 
     def stop_all_handler(self):
         self.thread.stop()

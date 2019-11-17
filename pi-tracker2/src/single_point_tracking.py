@@ -89,7 +89,7 @@ def get_current_star_location(img, last_position, search_half_size = 50, subPixe
         maxLoc = ema_num / ema_denom
 
     #todo: refine this
-    current_position = (maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size))
+    current_position = np.array([maxLoc[0] + (last_position[0] - search_half_size), maxLoc[1] + (last_position[1] - search_half_size)])
 
     return current_position
 

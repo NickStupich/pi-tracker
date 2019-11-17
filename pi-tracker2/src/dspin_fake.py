@@ -2,7 +2,8 @@
 from dspin_constants import *
 
 def dspin_Run(dir, speed):
-	print('dspin run: ', int(speed))
+	# print('dspin run: ', int(speed))
+	pass
 
 def dspin_SpdCalc(stepsPerSec):
 	result = stepsPerSec * 67.106
@@ -12,10 +13,13 @@ def dspin_SpdCalc(stepsPerSec):
 	return result
 
 def dspin_SoftStop():
-	print('dspin softstop')
+	# print('dspin softstop')
+	pass
 
 def connect_l6470():
-	print('dspin connecting...')
+	# print('dspin connecting...')
+	pass
 
 def disconnect_l6470():
-	print('dspin disconnecting...')
+	# print('dspin disconnecting...')
+	pass
