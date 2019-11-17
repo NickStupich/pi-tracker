@@ -14,6 +14,7 @@ class UpdatesListener(object):
         self.p = r.pubsub(ignore_subscribe_messages=True)
         self.add_parameter(messages.STATUS_MAX_PIXEL_VALUE, -1)
         self.add_parameter(messages.STATUS_CURRENT_TRACKING_POSITION, "")
+        self.add_parameter(messages.STATUS_STARTING_TRACKING_POSITION, "")
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler})
         self.thread = self.p.run_in_thread(sleep_time = 0.1)
 
@@ -49,8 +50,8 @@ class UpdatesListener(object):
             MaxPixelValue = self.current_values[messages.STATUS_MAX_PIXEL_VALUE],
             TrackVectorX = 7,#ca.guide_vector[0] if ca.guide_vector is not None else -1, 
             TrackVectorY = 7,#-ca.guide_vector[1] if ca.guide_vector is not None else -1,
-            StartedPosition = format_number(7),#cam.tracker.starting_coords),
-            CurrentPosition = format_number(7),#cam.tracker.last_coords),
+            StartedPosition = str(self.current_values[messages.STATUS_STARTING_TRACKING_POSITION]),
+            CurrentPosition = str(self.current_values[messages.STATUS_CURRENT_TRACKING_POSITION]),
             ParallelError = format_number(7),#ca.parallel_distance),
             OrthogonalError = format_number(7),#ca.orthogonal_distance),
             ErrorUpdateTime = str(7),#ca.update_time),

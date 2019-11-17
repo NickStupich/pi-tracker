@@ -133,7 +133,6 @@ def twoD_Gaussian(locs, amplitude, xo, yo, sigma, offset):
     g = offset + amplitude * np.exp(-sigma * ((x-xo)**2 + (y-yo)**2))
     return g.ravel()
 
-
 class SinglePointTracking(threading.Thread):
     last_coords = None
     is_tracking = False
@@ -192,6 +191,8 @@ class SinglePointTracking(threading.Thread):
     def process_frame(self, new_frame, subPixelFit = True):
         if self.last_coords is None:
             self.last_coords = get_start_position2(new_frame)
+            if self.last_coords is not None:
+                self.r.publish(messages.STATUS_STARTING_TRACKING_POSITION, redis_helpers.toRedis(self.last_coords))
         else:
             current_location = get_current_star_location(new_frame, self.last_coords, self.search_img_half_size, subPixelFit = subPixelFit)
             if current_location is None:

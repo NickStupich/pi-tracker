@@ -33,7 +33,8 @@ class Camera(threading.Thread):
         self.thread = p.run_in_thread(sleep_time = 0.01)
 
     def run(self):
-        folder = 'D:/star_guiding/images/2019-02-25.18-18-55'
+        # folder = 'D:/star_guiding/images/2019-02-25.18-18-55'
+        folder = 'D:/star_guiding/images/2019-02-25.18-11-26'
 
         filenames = list(map(lambda s2: folder + '/' + s2, os.listdir(folder)))
         filenames = sorted(filenames, key = lambda s: int(s.split('/')[-1].split('.')[0]))

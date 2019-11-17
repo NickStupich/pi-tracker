@@ -88,6 +88,7 @@ def dspin_GetStatus():
 	return temp
 
 def dspin_Run(dir, speed):
+	speed = int(speed)
 	dspin_xfer(dSPIN_RUN | dir)
 	if speed > 0xFFFFF: speed = 0xFFFFF
 

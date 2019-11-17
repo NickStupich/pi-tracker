@@ -5,6 +5,7 @@ import threading
 import messages
 import redis_helpers
 import redis
+import numpy as np
 
 # import dspin_l6470 as dspin
 import dspin_fake as dspin
@@ -17,13 +18,24 @@ class MotorControl(threading.Thread):
         p = r.pubsub(ignore_subscribe_messages=True)
         self.kill = False
         p.subscribe(**{messages.STOP_ALL:self.stop_all_handler,
-
+                messages.CMD_ENABLE_MOVEMENT:self.enable_movement_handler,
+                messages.CMD_DISABLE_MOVEMENT:self.disable_movement_handler,
+                messages.CMD_SET_ADJUSTMENT_FACTOR:self.set_adjustment_factor_handler,
             })
 
         self.thread = p.run_in_thread(sleep_time = 0.01)
 
     def stop_all_handler(self, message):
         self.kill = True
+
+    def enable_movement_handler(self, message):
+        self.movement_enabled = True
+
+    def disable_movement_handler(self, message):
+        self.movement_enabled = False
+    
+    def set_adjustment_factor_handler(self, message):
+        self.adjustment_factor = redis_helpers.fromRedis(message['data'])
 
     def run(self):
 
@@ -32,6 +44,7 @@ class MotorControl(threading.Thread):
         self.smoothed_tracking_factor = 1.0
         self.ema_factor = 0.0
         self.movement_enabled = True
+        self.prev_speed_error = 0
 
         dspin.connect_l6470()
         seconds_per_rotation = (24.*60.*60.)
@@ -46,26 +59,38 @@ class MotorControl(threading.Thread):
                 
                 new_speed = self.base_steps_per_second / (self.adjustment_factor * self.smoothed_tracking_factor)
                 # print('new_speed: ', new_speed)
-                dspin.dspin_Run(dspin.FWD, dspin.dspin_SpdCalc(new_speed))
+                speed_float = dspin.dspin_SpdCalc(new_speed) - self.prev_speed_error
+                # print(speed_float)
+                speed_int = int(np.round(speed_float))
+                self.prev_speed_error = speed_int - speed_float
+                dspin.dspin_Run(dspin.FWD, speed_int)
 		
             else:
-                dspin.SoftStop()
+                dspin.dspin_SoftStop()
 
-            time.sleep(1.0)
+            time.sleep(0.5)
 
         dspin.disconnect_l6470()
         self.thread.stop()
 
 if __name__ == "__main__":
-    #dspin.connect_l6470()
-    #dspin.dspin_Run(dspin.FWD, 1000)
-    #time.sleep(3)
-    #dspin.disconnect_l6470()
+    r = redis.StrictRedis(host='localhost', port=6379) 
 
     mc = MotorControl()
     mc.start()
     print('after MotorControl()')
-    time.sleep(10)
+    time.sleep(3)
 
-    r = redis.StrictRedis(host='localhost', port=6379) 
+    r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1.2))
+
+    time.sleep(3)
+
+    r.publish(messages.CMD_DISABLE_MOVEMENT, "")
+
+    time.sleep(3)
+
+    r.publish(messages.CMD_ENABLE_MOVEMENT, "")
+
+    time.sleep(3)
+
     r.publish(messages.STOP_ALL, "")
