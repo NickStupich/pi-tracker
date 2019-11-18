@@ -42,7 +42,7 @@ class CameraAdjuster(threading.Thread):
         update_time = None
 
         filtered_adjustment = 0
-        ema_factor = 0.9        
+        ema_factor = 0.5        
 
         current_state = AdjusterStates.NOT_GUIDING
 
