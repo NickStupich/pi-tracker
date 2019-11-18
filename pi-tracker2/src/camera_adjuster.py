@@ -72,9 +72,10 @@ class CameraAdjuster(threading.Thread):
                     #TODO: publish state?
 
                 elif channel == messages.CMD_STOP_GUIDING:
+                    r.publish(messages.CMD_ENABLE_MOVEMENT, "") #in case this came in during guide vector finding
+                    r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1))
+                    r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(1))
                     current_state = AdjusterStates.NOT_GUIDING
-                    r.publish(messages.CMD_ENABLE_MOVEMENT, "")
-                    r.publish(emssages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1))
                     #publish state?
 
                 elif channel == messages.STATUS_CURRENT_TRACKING_POSITION:
@@ -158,8 +159,7 @@ class CameraAdjuster(threading.Thread):
                         new_speed_adjustment = 1.0 - filtered_adjustment
                         
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))
-                        r.publish(messages.STATUS_CURRENT_ADJUSTMENT, redis_helpers.toRedis(adjustment))
-                        r.publish(messages.STATUS_CURRENT_FILTERED_ADJUSTMENT, redis_helpers.toRedis(filtered_adjustment))
+                        r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(adjustment))
                         r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))
                         r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance))
                         r.publish(messages.STATUS_DRIFT_X, redis_helpers.toRedis(shift[1]))
