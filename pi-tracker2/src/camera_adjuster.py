@@ -41,6 +41,9 @@ class CameraAdjuster(threading.Thread):
         parallel_distance = None
         update_time = None
 
+        filtered_adjustment = 0
+        ema_factor = 0.9        
+
         current_state = AdjusterStates.NOT_GUIDING
 
         r = redis.StrictRedis(host='localhost', port=6379) 
@@ -94,7 +97,8 @@ class CameraAdjuster(threading.Thread):
                             start_guiding_dir_1_start_time = datetime.now()
                             start_guiding_dir_1_start_location = current_position
                         elif (datetime.now() - start_guiding_dir_1_start_time).total_seconds() < VECTOR_ESTIMATION_TIME_SECONDS:
-                            print('elapsed time: ', (datetime.now() - start_guiding_dir_1_start_time).total_seconds())
+                            # print('elapsed time: ', (datetime.now() - start_guiding_dir_1_start_time).total_seconds())
+                            pass
                         else: #end of guide vector finding in direction 1
                             start_guiding_dir_1_end_time = datetime.now()
                             start_guiding_dir_1_end_location = current_position
@@ -105,6 +109,8 @@ class CameraAdjuster(threading.Thread):
                                                             (start_guiding_dir_1_end_time - start_guiding_dir_1_start_time).total_seconds()
 
                             print('guide vector: ', guide_vector)
+                            r.publish(messages.STATUS_GUIDE_VECTOR_X, redis_helpers.toRedis(guide_vector[1]))
+                            r.publish(messages.STATUS_GUIDE_VECTOR_Y, redis_helpers.toRedis(guide_vector[0]))
 
                             #now speed forwards to get back to original position
                             r.publish(messages.CMD_ENABLE_MOVEMENT, "")                                    
@@ -131,6 +137,7 @@ class CameraAdjuster(threading.Thread):
 
 
                             r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1.0))
+                            filtered_adjustment = 0 #reset
                             current_state = AdjusterStates.GUIDING
                             print('guiding...')
 
@@ -144,10 +151,20 @@ class CameraAdjuster(threading.Thread):
                         
                         adjustment = distance_along_guide / ADJUSTMENT_TARGET_SECONDS 
                         adjustment = np.clip(adjustment, -0.5, 0.5)
+
+                        #TODO: filter adjustment value?
+                        filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
                         
-                        new_speed_adjustment = 1.0 - adjustment
+                        new_speed_adjustment = 1.0 - filtered_adjustment
                         
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))
+                        r.publish(messages.STATUS_CURRENT_ADJUSTMENT, redis_helpers.toRedis(adjustment))
+                        r.publish(messages.STATUS_CURRENT_FILTERED_ADJUSTMENT, redis_helpers.toRedis(filtered_adjustment))
+                        r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))
+                        r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance))
+                        r.publish(messages.STATUS_DRIFT_X, redis_helpers.toRedis(shift[1]))
+                        r.publish(messages.STATUS_DRIFT_Y, redis_helpers.toRedis(shift[0]))
+
 
                     else:
                         print('unknown state: ', current_state)

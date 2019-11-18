@@ -12,11 +12,21 @@ class UpdatesListener(object):
 
         r = redis.StrictRedis(host='localhost', port=6379) 
         self.p = r.pubsub(ignore_subscribe_messages=True)
+
         self.add_parameter(messages.STATUS_MAX_PIXEL_VALUE, -1)
         self.add_parameter(messages.STATUS_CURRENT_TRACKING_POSITION, "")
         self.add_parameter(messages.STATUS_STARTING_TRACKING_POSITION, "")
         self.add_parameter(messages.CMD_SET_SHUTTER_SPEED, 100)
         self.add_parameter(messages.CMD_SET_VISUAL_GAIN, 10)
+        self.add_parameter(messages.STATUS_CURRENT_ADJUSTMENT, 1)
+        self.add_parameter(messages.STATUS_PARALLEL_ERROR, 0)
+        self.add_parameter(messages.STATUS_ORTHOGONAL_ERROR, 0)
+        self.add_parameter(messages.STATUS_DRIFT_X)
+        self.add_parameter(messages.STATUS_DRIFT_Y)
+        self.add_parameter(messages.STATUS_GUIDE_VECTOR_X)
+        self.add_parameter(messages.STATUS_GUIDE_VECTOR_Y)
+        self.add_parameter(messages.STATUS_CURRENT_FILTERED_ADJUSTMENT)
+        
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler})
         self.thread = self.p.run_in_thread(sleep_time = 0.1)
 
@@ -53,18 +63,18 @@ class UpdatesListener(object):
             FailedTrackCount = 7,#cam.failed_track_count,
             MeanAdjustment = str(7),#mc.tracking_factor),
             MaxPixelValue = self.current_values[messages.STATUS_MAX_PIXEL_VALUE],
-            TrackVectorX = 7,#ca.guide_vector[0] if ca.guide_vector is not None else -1, 
-            TrackVectorY = 7,#-ca.guide_vector[1] if ca.guide_vector is not None else -1,
+            TrackVectorX = str(self.current_values[messages.STATUS_GUIDE_VECTOR_X]),
+            TrackVectorY = str(self.current_values[messages.STATUS_GUIDE_VECTOR_Y]),
             StartedPosition = str(self.current_values[messages.STATUS_STARTING_TRACKING_POSITION]),
             CurrentPosition = str(self.current_values[messages.STATUS_CURRENT_TRACKING_POSITION]),
-            ParallelError = format_number(7),#ca.parallel_distance),
-            OrthogonalError = format_number(7),#ca.orthogonal_distance),
-            ErrorUpdateTime = str(7),#ca.update_time),
-            ShiftX = 7,#cam.tracker.shift_x,
-            ShiftY = 7,#cam.tracker.shift_y,
-            ShiftUpdateTime = str(7),#cam.tracker.shift_update_time),
-            CurrentAdjustment = str(7),#mc.tracking_factor),
-            SmoothedAdjustment = str(7),#mc.smoothed_tracking_factor),
+            ParallelError = str(self.current_values[messages.STATUS_PARALLEL_ERROR]),
+            OrthogonalError = str(self.current_values[messages.STATUS_ORTHOGONAL_ERROR]),
+            ErrorUpdateTime = str(datetime.datetime.now()),
+            ShiftX = str(self.current_values[messages.STATUS_DRIFT_X]),
+            ShiftY = str(self.current_values[messages.STATUS_DRIFT_Y]),
+            ShiftUpdateTime = str(datetime.datetime.now()),
+            CurrentAdjustment = str(self.current_values[messages.STATUS_CURRENT_ADJUSTMENT]),
+            SmoothedAdjustment = str(self.current_values[messages.STATUS_CURRENT_FILTERED_ADJUSTMENT]),
             AdjustmentUpdateTime = str(datetime.datetime.now()),
             NewLogs = "",
             ErrorLogs = "",
