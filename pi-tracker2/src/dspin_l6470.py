@@ -103,7 +103,7 @@ def dspin_SpdCalc(stepsPerSec):
 	result = stepsPerSec * 67.106
 	if result > 0x3FFF:
 		result = 0x3FFF
-	print('speed result: ', int(result))
+	#print('speed result: ', int(result))
 	return int(result)
 
 def connect_l6470():

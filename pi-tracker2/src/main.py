@@ -1,6 +1,8 @@
 
-# import camera_pi as camera
-import camera_files as camera
+import camera_pi as camera
+#import camera_files as camera
+
+
 import single_point_tracking as tracking
 import motor_control_l6470 as motor_control
 import updates_listener

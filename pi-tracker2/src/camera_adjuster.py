@@ -152,12 +152,13 @@ class CameraAdjuster(threading.Thread):
                         
                         adjustment = distance_along_guide / ADJUSTMENT_TARGET_SECONDS 
                         adjustment = np.clip(adjustment, -0.5, 0.5)
-
+                        #print(adjustment, 
                         #TODO: filter adjustment value?
-                        filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
+                        #filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
                         
                         new_speed_adjustment = 1.0 - filtered_adjustment
-                        
+                        filtered_adjustment = filtered_adjustment * ema_factor + new_speed_adjustment * (1 - ema_factor)
+
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))
                         r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(adjustment))
                         r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))

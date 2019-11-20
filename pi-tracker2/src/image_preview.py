@@ -39,7 +39,7 @@ class ImagePreview(object):
 
 		image = redis_helpers.fromRedis(message['data'])
 
-		target_size = 600
+		target_size = 400
 		if image.shape[0] > target_size:
 			factor = image.shape[0] // target_size
 			image = cv2.resize(image, None, fx = 1.0 / factor, fy = 1.0 / factor, interpolation=cv2.INTER_AREA)

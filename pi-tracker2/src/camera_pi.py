@@ -11,6 +11,8 @@ import redis_helpers
 
 r = redis.StrictRedis(host='localhost', port=6379) 
 
+PIXEL_SIZE_IN_ARC_SECONDS = 4.17
+
 class Camera(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -20,7 +22,7 @@ class Camera(threading.Thread):
         camera = mo.MMALCamera()
         
         camera.outputs[0].framesize = (1920, 1080)
-        camera.outputs[0].framerate = 2
+        camera.outputs[0].framerate = 1
         camera.outputs[0].format = mmal.MMAL_ENCODING_RGB24
 
         camera.control.params[mmal.MMAL_PARAMETER_ISO] = 800
@@ -37,8 +39,8 @@ class Camera(threading.Thread):
                 
         p = r.pubsub(ignore_subscribe_messages=True)
 
-        p.subscribe(**{messages.STOP_ALL:stop_all_handler,
-                        messages.CMD_SET_SHUTTER_SPEED : self.set_shutter_speed})
+        p.subscribe(**{messages.STOP_ALL:self.stop_all_handler,
+                        messages.CMD_SET_SHUTTER_SPEED : self.set_shutter_speed_handler})
 
         self.thread = p.run_in_thread(sleep_time = 0.01)
 
@@ -57,10 +59,14 @@ class Camera(threading.Thread):
     def stop_all_handler(self, message):
         print('got stop_all message')
         self.keepRunning = False
-        
-    def set_shutter_speed(self, message):
-        self.shutter_speed_ms = redis_helpers.fromRedis(message['data'])
+       
+    def set_shutter_speed(self, new_speed_ms):
         self.camera.control.params[mmal.MMAL_PARAMETER_SHUTTER_SPEED] = new_speed_ms * 1000
+        self.shutter_speed_ms = new_speed_ms
+
+    def set_shutter_speed_handler(self, message):
+        shutter_speed_ms = redis_helpers.fromRedis(message['data'])
+        self.set_shutter_speed(shutter_speed_ms)
         
     def image_callback(self, port, buf):
         #TODO: smoothing of multiple images. if needed?
