@@ -35,7 +35,7 @@ class Camera(threading.Thread):
         
         self.camera = camera
 
-        self.set_shutter_speed(100)
+        self.set_shutter_speed(300)
                 
         p = r.pubsub(ignore_subscribe_messages=True)
 

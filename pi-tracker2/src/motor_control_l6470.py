@@ -29,6 +29,7 @@ class MotorControl(threading.Thread):
         self.kill = True
 
     def enable_movement_handler(self, message):
+        print('movement enabled')
         self.movement_enabled = True
 
     def disable_movement_handler(self, message):
@@ -41,7 +42,6 @@ class MotorControl(threading.Thread):
 
         self.adjustment_factor = 1.0
         self.tracking_factor = 1.0
-        self.smoothed_tracking_factor = 1.0
         self.ema_factor = 0.0
         self.movement_enabled = True
         self.prev_speed_error = 0
@@ -57,11 +57,12 @@ class MotorControl(threading.Thread):
         while not self.kill:
             if self.movement_enabled:
                 
-                new_speed = self.base_steps_per_second / (self.adjustment_factor * self.smoothed_tracking_factor)
+                new_speed = self.base_steps_per_second * self.adjustment_factor 
                 # print('new_speed: ', new_speed)
                 speed_float = dspin.dspin_SpdCalc(new_speed) - self.prev_speed_error
                 # print(speed_float)
                 speed_int = int(np.round(speed_float))
+                print('speed: ', speed_int)
                 self.prev_speed_error = speed_int - speed_float
                 dspin.dspin_Run(dspin.FWD, speed_int)
 		

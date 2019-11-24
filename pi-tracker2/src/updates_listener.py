@@ -16,7 +16,7 @@ class UpdatesListener(object):
         self.add_parameter(messages.STATUS_MAX_PIXEL_VALUE, -1)
         self.add_parameter(messages.STATUS_CURRENT_TRACKING_POSITION, "")
         self.add_parameter(messages.STATUS_STARTING_TRACKING_POSITION, "")
-        self.add_parameter(messages.CMD_SET_SHUTTER_SPEED, 100)
+        self.add_parameter(messages.CMD_SET_SHUTTER_SPEED, 300)
         self.add_parameter(messages.CMD_SET_VISUAL_GAIN, 10)
         self.add_parameter(messages.STATUS_CURRENT_RAW_ADJUSTMENT, 1)
         self.add_parameter(messages.STATUS_PARALLEL_ERROR, 0)

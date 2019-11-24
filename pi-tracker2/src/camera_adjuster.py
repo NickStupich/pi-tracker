@@ -10,7 +10,7 @@ import redis
 import redis_helpers
 
 #TODO: longer after testing?
-VECTOR_ESTIMATION_TIME_SECONDS = 10
+VECTOR_ESTIMATION_TIME_SECONDS = 30
 ADJUSTMENT_TARGET_SECONDS = 3 #how 'aggressive' to pull towards ideal spot
 
 class AdjusterStates:
@@ -42,7 +42,7 @@ class CameraAdjuster(threading.Thread):
         update_time = None
 
         filtered_adjustment = 0
-        ema_factor = 0.5        
+        ema_factor = 0.8        
 
         current_state = AdjusterStates.NOT_GUIDING
 
@@ -120,12 +120,13 @@ class CameraAdjuster(threading.Thread):
 
 
                     elif current_state == AdjusterStates.START_GUIDING_DIR_2:   #return to starting point, get off-axis vector
+                        
                         if guiding_dir_2_start_time is None:
                             guiding_dir_2_start_time = datetime.now()
     
                         shift = current_position - desired_location
                         distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
-
+                        print('guide state 2, distance along guide: ', distance_along_guide)
                         if distance_along_guide > 0:
                             #still getting back to the start
                             pass
@@ -144,25 +145,32 @@ class CameraAdjuster(threading.Thread):
 
                     elif current_state == AdjusterStates.GUIDING:
                         shift = current_position - desired_location
+                        print('shift: ', shift)
                         distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
                         
                         parallel_distance = distance_along_guide
                         orthogonal_vector = shift - distance_along_guide * guide_vector
                         orthogonal_distance = np.linalg.norm(orthogonal_vector) 
                         
+                        orthogonal_distance2 = np.dot(shift, [-guide_vector[1], guide_vector[0]])
+                        #print('orthogonal: ', orthogonal_distance, orthogonal_distance2)
+
                         adjustment = distance_along_guide / ADJUSTMENT_TARGET_SECONDS 
                         adjustment = np.clip(adjustment, -0.5, 0.5)
                         #print(adjustment, 
                         #TODO: filter adjustment value?
                         #filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
                         
-                        new_speed_adjustment = 1.0 - filtered_adjustment
-                        filtered_adjustment = filtered_adjustment * ema_factor + new_speed_adjustment * (1 - ema_factor)
+                        #new_speed_adjustment = 1.0 - filtered_adjustment
+                        filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
+
+                        new_speed_adjustment = 1.0 + filtered_adjustment
+
 
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))
                         r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(adjustment))
                         r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))
-                        r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance))
+                        r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance2))
                         r.publish(messages.STATUS_DRIFT_X, redis_helpers.toRedis(shift[1]))
                         r.publish(messages.STATUS_DRIFT_Y, redis_helpers.toRedis(shift[0]))
 
