@@ -48,7 +48,7 @@ class MotorControl(threading.Thread):
 
         seconds_per_rotation = (24.*60.*60.)
         gear_ratio = (99 + 1044./ 2057.) * 27 * 84 / 52.
-        steps_per_rotation = 200. * 16.
+        steps_per_rotation = 200. #* 16.
         self.base_steps_per_second = steps_per_rotation * gear_ratio / seconds_per_rotation 
 
         r = redis.StrictRedis(host='localhost', port=6379) 

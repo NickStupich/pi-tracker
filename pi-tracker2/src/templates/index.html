@@ -258,13 +258,13 @@
 <div>
 <div>
 	Declination
-	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/dec_back_start')" onmouseup="$.get($SCRIPT_ROOT + '/dec_back_stop')">Back</button>
-	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/dec_forward_start')" onmouseup="$.get($SCRIPT_ROOT + '/dec_forward_stop')">Forward</button>
+	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/dec_back_start')" onmousedown="$.get($SCRIPT_ROOT + '/dec_back_start')" ontouchend="$.get($SCRIPT_ROOT + '/dec_back_stop')" onmouseup="$.get($SCRIPT_ROOT + '/dec_back_stop')">Back</button>
+	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/dec_forward_start')" onmousedown="$.get($SCRIPT_ROOT + '/dec_forward_start')" ontouchend="$.get($SCRIPT_ROOT + '/dec_forward_stop')" onmouseup="$.get($SCRIPT_ROOT + '/dec_forward_stop')">Forward</button>
 </div>
 <div>
 	RA
-	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/ra_back_start')" onmouseup="$.get($SCRIPT_ROOT + '/ra_back_stop')">Back</button>
-	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/ra_forward_start')" onmouseup="$.get($SCRIPT_ROOT + '/ra_forward_stop')">Forward</button>
+	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/ra_back_start')" onmousedown="$.get($SCRIPT_ROOT + '/ra_back_start')" ontouchend="$.get($SCRIPT_ROOT + '/dec_back_stop')" onmouseup="$.get($SCRIPT_ROOT + '/ra_back_stop')">Back</button>
+	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/ra_forward_start')" onmousedown="$.get($SCRIPT_ROOT + '/ra_forward_start')" ontouchend="$.get($SCRIPT_ROOT + '/ra_forward_end')" onmouseup="$.get($SCRIPT_ROOT + '/ra_forward_stop')">Forward</button>
 </div>
 </div>
 

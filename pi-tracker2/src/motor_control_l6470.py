@@ -40,9 +40,9 @@ class MotorControl(threading.Thread):
 
     def run(self):
 
-        self.adjustment_factor = 1.0
-        self.tracking_factor = 1.0
-        self.ema_factor = 0.0
+        self.adjustment_factor = 0.0
+        #self.tracking_factor = 1.0
+        #self.ema_factor = 0.0
         self.movement_enabled = True
         self.prev_speed_error = 0
 
@@ -58,13 +58,16 @@ class MotorControl(threading.Thread):
             if self.movement_enabled:
                 
                 new_speed = self.base_steps_per_second * (1 + self.adjustment_factor )
+                new_speed_abs = np.abs(new_speed)
                 # print('new_speed: ', new_speed)
-                speed_float = dspin.dspin_SpdCalc(new_speed) - self.prev_speed_error
+                speed_float = dspin.dspin_SpdCalc(new_speed_abs) - self.prev_speed_error
                 # print(speed_float)
                 speed_int = int(np.round(speed_float))
-                #print('speed: ', speed_int)
                 self.prev_speed_error = speed_int - speed_float
-                dspin.dspin_Run(dspin.FWD, speed_int)
+                direction = dspin.FWD if new_speed > 0 else dspin.REV
+                
+                # print('speed, dir: ', speed_int, direction)
+                dspin.dspin_Run(direction, speed_int)
 		
             else:
                 dspin.dspin_SoftStop()
