@@ -5,6 +5,29 @@
 	<script type="text/javascript" src="{{url_for('static', filename='jquery-1.7.1.min.js') }}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='canvasjs.min.js') }}"></script>
 
+	<style>
+
+		.button {
+		  border: none;
+		  color: white;
+		  padding: 15px 32px;
+		  text-align: center;
+		  text-decoration: none;
+		  display: inline-block;
+		  margin: 4px 2px;
+		  cursor: pointer;
+		  font-size: 20px;
+		  background-color:gray;
+		}
+
+		.button:focus{
+			background-color:gray;
+		}
+		.button:active{
+			background-color:red;
+		}
+	</style>
+
 	<script>
 
 
@@ -208,9 +231,21 @@
 			adjustmentChart.render();
 		};
 
-
-
         setInterval(update_values, 1000);
+		}
+
+
+
+
+		function httpGetAsync(theUrl, callback)
+		{
+		    var xmlHttp = new XMLHttpRequest();
+		    xmlHttp.onreadystatechange = function() { 
+		        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+		            callback(xmlHttp.responseText);
+		    }
+		    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+		    xmlHttp.send(null);
 		}
 
 
@@ -219,6 +254,20 @@
   <body>
   
   <div style="width:100%">
+
+<div>
+<div>
+	Declination
+	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/dec_back_start')" onmouseup="$.get($SCRIPT_ROOT + '/dec_back_stop')">Back</button>
+	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/dec_forward_start')" onmouseup="$.get($SCRIPT_ROOT + '/dec_forward_stop')">Forward</button>
+</div>
+<div>
+	RA
+	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/ra_back_start')" onmouseup="$.get($SCRIPT_ROOT + '/ra_back_stop')">Back</button>
+	<button type="button" class="button" onmousedown="$.get($SCRIPT_ROOT + '/ra_forward_start')" onmouseup="$.get($SCRIPT_ROOT + '/ra_forward_stop')">Forward</button>
+</div>
+</div>
+
   <div style='width:400px; float:left'>
 	<form action="/changeSettings" method="post">
 	            {{ camSettingsForm.csrf }}

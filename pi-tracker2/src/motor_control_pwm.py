@@ -7,7 +7,26 @@ import redis_helpers
 import redis
 import numpy as np
 
-from gpiozero import LED, PWMLED
+if 1:
+    from gpiozero import LED, PWMLED
+else:    
+    class PWMLED(object):
+        value = False
+        frequency = 0
+        def __init__(*args):
+            pass
+
+        def on(self):
+            pass
+
+        def off(self):
+            pass
+
+    class LED(object):
+        def __init__(*args): pass
+        def on(self): pass
+        def off(self): pass
+        
 
 DIR_PIN_NUM = 14
 STEP_PIN_NUM = 15
@@ -27,6 +46,10 @@ class MotorControl(threading.Thread):
 
         self.step_pin.value = 0
 
+        seconds_per_rotation = (24.*60.*60.)
+        gear_ratio = (99 + 1044./ 2057.) * 27 * 84 / 52.
+        steps_per_rotation = 200. * 16.
+        self.base_steps_per_second = steps_per_rotation * gear_ratio / seconds_per_rotation 
 
         r = redis.StrictRedis(host='localhost', port=6379) 
         p = r.pubsub(ignore_subscribe_messages=True)
@@ -34,7 +57,7 @@ class MotorControl(threading.Thread):
         p.subscribe(**{messages.STOP_ALL:self.stop_all_handler,
                 #messages.CMD_ENABLE_AXIS_2_MOVEMENT:self.enable_movement_handler,
                 #messages.CMD_DISABLE_AXIS_2_MOVEMENT:self.disable_movement_handler,
-                messages.CMD_SET_SPEED_AXIS_2:self.set_speed_handler,
+                messages.CMD_SET_SPEED_ADJUSTMENT_DEC:self.set_speed_handler,
             })
 
         self.thread = p.run_in_thread(sleep_time = 0.01)
@@ -60,7 +83,9 @@ class MotorControl(threading.Thread):
             self.step_pin.value = 0
         else:   
             self.step_pin.value = 0.5
-            self.step_pin.frequency = np.abs(self.current_speed)
+            self.step_pin.frequency = self.base_steps_per_second * np.abs(self.current_speed)
+            # print('frequency: ', self.step_pin.frequency)
+
 
     def run(self):
 
@@ -105,15 +130,15 @@ if __name__ == "__main__":
     print('started')
     time.sleep(5)
 
-    r.publish(messages.CMD_SET_SPEED_AXIS_2, redis_helpers.toRedis(10))
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(10))
 
     time.sleep(5)
 
-    r.publish(messages.CMD_SET_SPEED_AXIS_2, redis_helpers.toRedis(0))
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(0))
 
     time.sleep(5)
 
-    r.publish(messages.CMD_SET_SPEED_AXIS_2, redis_helpers.toRedis(-1000))
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(-1000))
     time.sleep(5)
 
     r.publish(messages.STOP_ALL, "")

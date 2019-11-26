@@ -52,6 +52,7 @@ class CameraAdjuster(threading.Thread):
         p.subscribe(messages.CMD_START_GUIDING)
         p.subscribe(messages.CMD_STOP_GUIDING) 
         p.subscribe(messages.STATUS_CURRENT_TRACKING_POSITION)
+        p.subscribe(messages.CMD_START_TRACKING)
 
         start_guiding_dir_1_start_time = None
         start_guiding_dir_1_start_location = None
@@ -64,7 +65,11 @@ class CameraAdjuster(threading.Thread):
                 channel = message['channel'].decode('ASCII')
                 data = message['data']
 
-                if channel == messages.CMD_START_GUIDING:
+                if channel == messages.CMD_START_TRACKING:
+                    #reset things
+                    desired_location = None
+
+                elif channel == messages.CMD_START_GUIDING:
                     print('start guiding received')
                     desired_location = None #will get grabbed first
                     current_state = AdjusterStates.CMD_START_GUIDING
@@ -76,10 +81,20 @@ class CameraAdjuster(threading.Thread):
                     r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1))
                     r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(1))
                     current_state = AdjusterStates.NOT_GUIDING
+                    desired_location = None 
                     #publish state?
 
                 elif channel == messages.STATUS_CURRENT_TRACKING_POSITION:
                     current_position = redis_helpers.fromRedis(data)
+
+                    if desired_location is None:
+                        desired_location = current_position
+                        continue
+                    else:
+                        shift = current_position - desired_location
+                        r.publish(messages.STATUS_DRIFT_X, redis_helpers.toRedis(shift[1]))
+                        r.publish(messages.STATUS_DRIFT_Y, redis_helpers.toRedis(shift[0]))
+
                     if current_state == AdjusterStates.NOT_GUIDING:
                         pass
 
@@ -98,7 +113,6 @@ class CameraAdjuster(threading.Thread):
                             start_guiding_dir_1_start_time = datetime.now()
                             start_guiding_dir_1_start_location = current_position
                         elif (datetime.now() - start_guiding_dir_1_start_time).total_seconds() < VECTOR_ESTIMATION_TIME_SECONDS:
-                            # print('elapsed time: ', (datetime.now() - start_guiding_dir_1_start_time).total_seconds())
                             pass
                         else: #end of guide vector finding in direction 1
                             start_guiding_dir_1_end_time = datetime.now()
@@ -124,7 +138,6 @@ class CameraAdjuster(threading.Thread):
                         if guiding_dir_2_start_time is None:
                             guiding_dir_2_start_time = datetime.now()
     
-                        shift = current_position - desired_location
                         distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
                         print('guide state 2, distance along guide: ', distance_along_guide)
                         if distance_along_guide > 0:
@@ -149,31 +162,20 @@ class CameraAdjuster(threading.Thread):
                         distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
                         
                         parallel_distance = distance_along_guide
-                        orthogonal_vector = shift - distance_along_guide * guide_vector
-                        orthogonal_distance = np.linalg.norm(orthogonal_vector) 
-                        
-                        orthogonal_distance2 = np.dot(shift, [-guide_vector[1], guide_vector[0]])
-                        #print('orthogonal: ', orthogonal_distance, orthogonal_distance2)
+                        orthogonal_vector = shift - distance_along_guide * guide_vector                        
+                        orthogonal_distance = np.dot(shift, [-guide_vector[1], guide_vector[0]])
 
                         adjustment = distance_along_guide / ADJUSTMENT_TARGET_SECONDS 
                         adjustment = np.clip(adjustment, -0.5, 0.5)
-                        #print(adjustment, 
-                        #TODO: filter adjustment value?
-                        #filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
-                        
-                        #new_speed_adjustment = 1.0 - filtered_adjustment
                         filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
 
-                        new_speed_adjustment = 1.0 + filtered_adjustment
+                        new_speed_adjustment = filtered_adjustment
 
 
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))
                         r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(adjustment))
                         r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))
-                        r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance2))
-                        r.publish(messages.STATUS_DRIFT_X, redis_helpers.toRedis(shift[1]))
-                        r.publish(messages.STATUS_DRIFT_Y, redis_helpers.toRedis(shift[0]))
-
+                        r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance))
 
                     else:
                         print('unknown state: ', current_state)

@@ -142,6 +142,53 @@ def start_following():
     r.publish(messages.CMD_START_GUIDING, "")
     return redirect('/')
 
+
+
+manual_adjust_speed = 100
+@app.route('/dec_back_start')
+def dec_back_start():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(-manual_adjust_speed))
+    print('dec_back_start()')
+    return ""
+@app.route('/dec_back_stop')
+def dec_back_stop():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(1))
+    print('dec_back_stop()')
+    return ""
+@app.route('/dec_forward_start')
+def dec_forward_start():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(manual_adjust_speed))
+    print('dec_forward_start()')
+    return ""
+@app.route('/dec_forward_stop')
+def dec_forward_stop():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(1))
+    print('dec_forward_stop()')
+    return ""
+
+@app.route('/ra_back_start')
+def ra_back_start():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(-manual_adjust_speed))
+    print('ra_back_start()')
+    return ""
+@app.route('/ra_back_stop')
+def ra_back_stop():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0))
+    print('ra_back_stop()')
+    return ""
+@app.route('/ra_forward_start')
+def ra_forward_start():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(manual_adjust_speed))
+    print('ra_forward_start()')
+    return ""
+@app.route('/ra_forward_stop')
+def ra_forward_stop():
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(1))
+    print('ra_forward_stop()')
+    return ""
+
+
+
 @app.route('/updates', methods= ['GET'])
 def update_status():
     global new_logs, error_logs

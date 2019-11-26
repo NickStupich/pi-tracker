@@ -57,7 +57,7 @@ class MotorControl(threading.Thread):
         while not self.kill:
             if self.movement_enabled:
                 
-                new_speed = self.base_steps_per_second * self.adjustment_factor 
+                new_speed = self.base_steps_per_second * (1 + self.adjustment_factor )
                 # print('new_speed: ', new_speed)
                 speed_float = dspin.dspin_SpdCalc(new_speed) - self.prev_speed_error
                 # print(speed_float)

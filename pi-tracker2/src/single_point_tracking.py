@@ -177,7 +177,7 @@ class SinglePointTracking(threading.Thread):
                     if self.is_tracking:
                         img = redis_helpers.fromRedis(data)
                         self.process_frame(img)
-                        print(self.last_coords)
+                        # print(self.last_coords)
                         if self.last_coords is None:
                             self.r.publish(messages.NEW_SUB_IMAGE_FRAME, self.non_tracking_sub_image_serialized)
                         else:
