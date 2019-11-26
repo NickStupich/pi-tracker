@@ -5,6 +5,7 @@ import camera_pi as camera
 
 import single_point_tracking as tracking
 import motor_control_l6470 as motor_control
+import motor_control_pwm as motor_control_axis_2
 import updates_listener
 import web_ui
 import image_preview    
@@ -24,5 +25,8 @@ if __name__ == '__main__':
 
     adjuster = camera_adjuster.CameraAdjuster()
     adjuster.start()
+
+    motor_2 = motor_control_axis_2.MotorControl()
+    motor_2.start()
 
     web_ui.run()

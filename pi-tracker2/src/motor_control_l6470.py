@@ -52,7 +52,7 @@ class MotorControl(threading.Thread):
         steps_per_rotation = 400.
         self.base_steps_per_second = steps_per_rotation * gear_ratio / seconds_per_rotation 
 
-        print('baseline steps per second: ', self.base_steps_per_second)
+        #print('baseline steps per second: ', self.base_steps_per_second)
         
         while not self.kill:
             if self.movement_enabled:
@@ -62,7 +62,7 @@ class MotorControl(threading.Thread):
                 speed_float = dspin.dspin_SpdCalc(new_speed) - self.prev_speed_error
                 # print(speed_float)
                 speed_int = int(np.round(speed_float))
-                print('speed: ', speed_int)
+                #print('speed: ', speed_int)
                 self.prev_speed_error = speed_int - speed_float
                 dspin.dspin_Run(dspin.FWD, speed_int)
 		
