@@ -10,7 +10,7 @@ import redis
 import redis_helpers
 
 #TODO: longer after testing?
-VECTOR_ESTIMATION_TIME_SECONDS = 30
+VECTOR_ESTIMATION_TIME_SECONDS = 10
 ADJUSTMENT_TARGET_SECONDS = 3 #how 'aggressive' to pull towards ideal spot
 
 class AdjusterStates:
@@ -18,7 +18,11 @@ class AdjusterStates:
     CMD_START_GUIDING = NOT_GUIDING +1
     START_GUIDING_DIR_1 = CMD_START_GUIDING + 1
     START_GUIDING_DIR_2 = START_GUIDING_DIR_1 + 1
-    GUIDING = START_GUIDING_DIR_2 + 1
+    
+    START_GUIDING_DIR_ORTH_1 = START_GUIDING_DIR_2 + 1
+    START_GUIDING_DIR_ORTH_2 = START_GUIDING_DIR_ORTH_1 + 1
+
+    GUIDING = START_GUIDING_DIR_ORTH_2 + 1
 
 class CameraAdjuster(threading.Thread):
     def __init__(self):
@@ -36,6 +40,7 @@ class CameraAdjuster(threading.Thread):
     def run(self):
         desired_location = None
         guide_vector = None
+        guide_vector_orthogonal = None
 
         orthogonal_distance = None
         parallel_distance = None
@@ -58,6 +63,8 @@ class CameraAdjuster(threading.Thread):
         start_guiding_dir_1_start_location = None
 
         guiding_dir_2_start_time = None
+
+        guiding_dir_orth_start_time = None
         
         while not self.kill:
             message = p.get_message()
@@ -99,7 +106,9 @@ class CameraAdjuster(threading.Thread):
                         pass
 
                     elif current_state == AdjusterStates.CMD_START_GUIDING: #set up to calc guiding vector
-                        r.publish(messages.CMD_DISABLE_MOVEMENT, "")
+                        # r.publish(messages.CMD_DISABLE_MOVEMENT, "")
+                        r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(-1))
+
                         desired_location = current_position
                         #TODO: wait a frame or two?
 
@@ -128,8 +137,8 @@ class CameraAdjuster(threading.Thread):
                             r.publish(messages.STATUS_GUIDE_VECTOR_Y, redis_helpers.toRedis(guide_vector[0]))
 
                             #now speed forwards to get back to original position
-                            r.publish(messages.CMD_ENABLE_MOVEMENT, "")                                    
-                            r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(2.0))
+                            # r.publish(messages.CMD_ENABLE_MOVEMENT, "")                                    
+                            r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1.0))
                             current_state = AdjusterStates.START_GUIDING_DIR_2
 
 
@@ -137,45 +146,86 @@ class CameraAdjuster(threading.Thread):
                         
                         if guiding_dir_2_start_time is None:
                             guiding_dir_2_start_time = datetime.now()
-    
-                        distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
-                        print('guide state 2, distance along guide: ', distance_along_guide)
-                        if distance_along_guide > 0:
-                            #still getting back to the start
-                            pass
-                        else:        
-                            elapsed_time_seconds = (datetime.now() - guiding_dir_2_start_time).total_seconds()
-                            orthogonal_vector = (shift - distance_along_guide * guide_vector) / elapsed_time_seconds
-                            print('orthogonal vector: ', orthogonal_vector)
-                            #convert pixels/second to arc-seconds/s or something
-                            orthogonal_distance = np.linalg.norm(orthogonal_vector) 
+                        else:
+        
+                            distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
+                            print('guide state 2, distance along guide: ', distance_along_guide)
+                            if distance_along_guide > 0:
+                                #still getting back to the start
+                                pass
+                            else:        
+                                elapsed_time_seconds = (datetime.now() - guiding_dir_2_start_time).total_seconds()
+                                orthogonal_vector = (shift - distance_along_guide * guide_vector) / elapsed_time_seconds
+                                print('orthogonal vector: ', orthogonal_vector)
+                                #convert pixels/second to arc-seconds/s or something
+                                orthogonal_distance = np.linalg.norm(orthogonal_vector) 
 
 
-                            r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(1.0))
-                            filtered_adjustment = 0 #reset
-                            current_state = AdjusterStates.GUIDING
-                            print('guiding...')
+                                r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(0.))
+                                filtered_adjustment = 0 #reset
+                                current_state = AdjusterStates.START_GUIDING_DIR_ORTH_1
+                                print('guiding...')
 
-                    elif current_state == AdjusterStates.GUIDING:
+                    elif current_state in [AdjusterStates.START_GUIDING_DIR_ORTH_1, AdjusterStates.START_GUIDING_DIR_ORTH_2,
+                        AdjusterStates.GUIDING]:
+
+                        #do parallel guiding in all states
                         shift = current_position - desired_location
                         print('shift: ', shift)
-                        distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
-                        
-                        parallel_distance = distance_along_guide
-                        orthogonal_vector = shift - distance_along_guide * guide_vector                        
-                        orthogonal_distance = np.dot(shift, [-guide_vector[1], guide_vector[0]])
+                        parallel_distance = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
 
-                        adjustment = distance_along_guide / ADJUSTMENT_TARGET_SECONDS 
+                        orthogonal_distance = np.dot(shift, [-guide_vector[1], guide_vector[0]])
+                        # orthogonal_distance = np.dot(shift, guide_vector_orthogonal) / (np.linalg.norm(guide_vector_orthogonal)**2)
+
+
+                        adjustment = parallel_distance / ADJUSTMENT_TARGET_SECONDS 
                         adjustment = np.clip(adjustment, -0.5, 0.5)
                         filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
-
                         new_speed_adjustment = filtered_adjustment
+
+                        if current_state == AdjusterStates.START_GUIDING_DIR_ORTH_1:                                
+                            if guiding_dir_orth_start_time is None:
+                                guiding_dir_orth_start_time = datetime.now()
+                                guiding_dir_orth_start_location = current_position
+                                orthogonal_adjustment = -1
+                            else:
+                                elapsed_time_seconds = (datetime.now() - guiding_dir_orth_start_time).total_seconds()
+                                if elapsed_time_seconds >= VECTOR_ESTIMATION_TIME_SECONDS:
+                                    distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
+                                    orthogonal_vector = shift - distance_along_guide * guide_vector        
+                                    guide_vector_orthogonal = orthogonal_vector / elapsed_time_seconds
+
+                                    print('guide vector orthogonal: ', guide_vector_orthogonal)
+
+                                    current_state = AdjusterStates.START_GUIDING_DIR_ORTH_2
+                                    orthogonal_adjustment = 1 #start speeding back towards origin
+
+                        elif current_state == AdjusterStates.START_GUIDING_DIR_ORTH_2:
+                            print('dir_orth_2, orth distance = ', orthogonal_distance)
+
+                            if orthogonal_distance < 0:
+                                print('back to origin, moving to guiding')
+                                orthogonal_adjustment = 0
+                                current_state = AdjusterStates.GUIDING
+
+                            #TODO: back to original position
+
+                        elif current_state == AdjusterStates.GUIDING:
+                            
+                            orthogonal_vector = shift - parallel_distance * guide_vector                        
+
+                            # print(orthogonal_distance_original, orthogonal_distance)
+
+
+                            #TODO: filter realllll slow
+                            orthogonal_adjustment = orthogonal_distance / ADJUSTMENT_TARGET_SECONDS
 
 
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))
                         r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(adjustment))
                         r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))
                         r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance))
+                        r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(orthogonal_adjustment))
 
                     else:
                         print('unknown state: ', current_state)

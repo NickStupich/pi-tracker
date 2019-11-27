@@ -7,8 +7,8 @@ import redis_helpers
 import redis
 import numpy as np
 
-import dspin_l6470 as dspin
-# import dspin_fake as dspin
+# import dspin_l6470 as dspin
+import dspin_fake as dspin
 
 class MotorControl(threading.Thread):
     
