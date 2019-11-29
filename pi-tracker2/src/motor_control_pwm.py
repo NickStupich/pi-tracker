@@ -84,7 +84,14 @@ class MotorControl(threading.Thread):
             self.step_pin.value = 0
         else:   
             self.step_pin.value = 0.5
-            self.step_pin.frequency = self.base_steps_per_second * np.abs(self.current_speed)
+            if np.abs(self.current_speed) > 100:
+                print('macro')
+                self.micro_pin.off()
+                self.step_pin.frequency = self.base_steps_per_second * np.abs(self.current_speed) / 16
+            else:
+                print('micro')
+                self.micro_pin.on() 
+                self.step_pin.frequency = self.base_steps_per_second * np.abs(self.current_speed)
             # print('frequency: ', self.step_pin.frequency)
 
 
