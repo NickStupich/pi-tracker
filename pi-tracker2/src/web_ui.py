@@ -145,7 +145,7 @@ def start_following():
 
 
 manual_adjust_speed_dec = 100
-manual_adjust_speed_ra = 1000
+manual_adjust_speed_ra = 100
 @app.route('/dec_back_start')
 def dec_back_start():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(-manual_adjust_speed_dec))

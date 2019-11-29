@@ -173,8 +173,15 @@ class CameraAdjuster(threading.Thread):
                         shift = current_position - desired_location
                         print('shift: ', shift)
                         parallel_distance = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
-
-                        orthogonal_distance = np.dot(shift, [-guide_vector[1], guide_vector[0]])
+                    
+                        if guide_vector_orthogonal is None:
+                            orthogonal_distance = 0
+                        else:   
+                            orthogonal_distance = np.dot(shift, guide_vector_orthogonal) / (np.linalg.norm(guide_vector_orthogonal)**2)
+                        
+                        print('orth dist: ', orthogonal_distance)
+                        
+                        #orthogonal_distance = np.dot(shift, [-guide_vector[1], guide_vector[0]])
                         # orthogonal_distance = np.dot(shift, guide_vector_orthogonal) / (np.linalg.norm(guide_vector_orthogonal)**2)
 
 
@@ -185,19 +192,22 @@ class CameraAdjuster(threading.Thread):
 
                         if current_state == AdjusterStates.START_GUIDING_DIR_ORTH_1:                                
                             if guiding_dir_orth_start_time is None:
+                                print('starting guiding for orthogonal')
                                 guiding_dir_orth_start_time = datetime.now()
                                 guiding_dir_orth_start_location = current_position
                                 orthogonal_adjustment = -1
                             else:
                                 elapsed_time_seconds = (datetime.now() - guiding_dir_orth_start_time).total_seconds()
+                                print('orth guide vector estimating time: ', elapsed_time_seconds)
                                 if elapsed_time_seconds >= VECTOR_ESTIMATION_TIME_SECONDS:
                                     distance_along_guide = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
                                     orthogonal_vector = shift - distance_along_guide * guide_vector        
                                     guide_vector_orthogonal = orthogonal_vector / elapsed_time_seconds
 
                                     print('guide vector orthogonal: ', guide_vector_orthogonal)
-
-                                    current_state = AdjusterStates.START_GUIDING_DIR_ORTH_2
+                                    
+                                    current_state = AdjusterStates.GUIDING
+                                    #current_state = AdjusterStates.START_GUIDING_DIR_ORTH_2
                                     orthogonal_adjustment = 1 #start speeding back towards origin
 
                         elif current_state == AdjusterStates.START_GUIDING_DIR_ORTH_2:
@@ -218,7 +228,7 @@ class CameraAdjuster(threading.Thread):
 
 
                             #TODO: filter realllll slow
-                            orthogonal_adjustment = orthogonal_distance / ADJUSTMENT_TARGET_SECONDS
+                            orthogonal_adjustment = orthogonal_distance / (10*ADJUSTMENT_TARGET_SECONDS)
 
 
                         r.publish(messages.CMD_SET_ADJUSTMENT_FACTOR, redis_helpers.toRedis(new_speed_adjustment))

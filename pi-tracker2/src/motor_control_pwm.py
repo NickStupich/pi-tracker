@@ -7,7 +7,7 @@ import redis_helpers
 import redis
 import numpy as np
 
-if 0:
+if 1:
     from gpiozero import LED, PWMLED
 else:    
     class PWMLED(object):
@@ -42,13 +42,13 @@ class MotorControl(threading.Thread):
         self.micro_pin = LED(MICRO_STEP_PIN_NUM)
 
         self.dir_pin.on()
-        self.micro_pin.off()
+        self.micro_pin.on()
 
         self.step_pin.value = 0
 
         seconds_per_rotation = (24.*60.*60.)
         gear_ratio = (99 + 1044./ 2057.) * 27 * 84 / 52.
-        steps_per_rotation = 200. #* 16.
+        steps_per_rotation = 200. * 16.
         self.base_steps_per_second = steps_per_rotation * gear_ratio / seconds_per_rotation 
 
         r = redis.StrictRedis(host='localhost', port=6379) 
@@ -74,6 +74,7 @@ class MotorControl(threading.Thread):
     
     def set_speed_handler(self, message):
         self.current_speed = redis_helpers.fromRedis(message['data'])
+        print('orthogonal speed: ', self.current_speed)
         if self.current_speed < 0:
             self.dir_pin.off()
         else:
