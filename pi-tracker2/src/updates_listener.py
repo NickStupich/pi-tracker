@@ -23,9 +23,14 @@ class UpdatesListener(object):
         self.add_parameter(messages.STATUS_ORTHOGONAL_ERROR, 0)
         self.add_parameter(messages.STATUS_DRIFT_X)
         self.add_parameter(messages.STATUS_DRIFT_Y)
-        self.add_parameter(messages.STATUS_GUIDE_VECTOR_X)
-        self.add_parameter(messages.STATUS_GUIDE_VECTOR_Y)
-        self.add_parameter(messages.CMD_SET_ADJUSTMENT_FACTOR)
+        self.add_parameter(messages.STATUS_GUIDE_VECTOR_RA)
+        self.add_parameter(messages.STATUS_GUIDE_VECTOR_DEC)
+
+        self.add_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_RA)
+        self.add_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_DEC)
+
+        self.add_parameter(messages.STATUS_CALIBRATION_DRIFT_ARC_SECONDS)
+        self.add_parameter(messages.STATUS_FAILED_TRACKING_COUNT)
         
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler})
         self.thread = self.p.run_in_thread(sleep_time = 0.1)
@@ -60,11 +65,11 @@ class UpdatesListener(object):
                 return '%.1f' % x
 
         return jsonify(
-            FailedTrackCount = 7,#cam.failed_track_count,
+            FailedTrackCount = self.current_values[messages.STATUS_FAILED_TRACKING_COUNT],
             MeanAdjustment = str(7),#mc.tracking_factor),
             MaxPixelValue = self.current_values[messages.STATUS_MAX_PIXEL_VALUE],
-            TrackVectorX = str(self.current_values[messages.STATUS_GUIDE_VECTOR_X]),
-            TrackVectorY = str(self.current_values[messages.STATUS_GUIDE_VECTOR_Y]),
+            GuideVectorRA = str(self.current_values[messages.STATUS_GUIDE_VECTOR_RA]),
+            GuideVectorDec = str(self.current_values[messages.STATUS_GUIDE_VECTOR_DEC]),
             StartedPosition = str(self.current_values[messages.STATUS_STARTING_TRACKING_POSITION]),
             CurrentPosition = str(self.current_values[messages.STATUS_CURRENT_TRACKING_POSITION]),
             ParallelError = str(self.current_values[messages.STATUS_PARALLEL_ERROR]),
@@ -74,8 +79,10 @@ class UpdatesListener(object):
             ShiftY = str(self.current_values[messages.STATUS_DRIFT_Y]),
             ShiftUpdateTime = str(datetime.datetime.now()),
             CurrentAdjustment = str(self.current_values[messages.STATUS_CURRENT_RAW_ADJUSTMENT]),
-            SmoothedAdjustment = str(self.current_values[messages.CMD_SET_ADJUSTMENT_FACTOR]),
+            SmoothedAdjustment = str(self.current_values[messages.CMD_SET_SPEED_ADJUSTMENT_RA]),
+            AdjustmentDec = str(self.current_values[messages.CMD_SET_SPEED_ADJUSTMENT_DEC]),
             AdjustmentUpdateTime = str(datetime.datetime.now()),
+            CalibrationDrift = str(self.current_values[messages.STATUS_CALIBRATION_DRIFT_ARC_SECONDS]),
             NewLogs = "",
             ErrorLogs = "",
             )

@@ -47,8 +47,10 @@
                 	$("#FailedTrackCount").text(data.FailedTrackCount)
                 	$("#MaxPixelValue").text(data.MaxPixelValue)
 
-                	$("#TrackVectorX").text(data.TrackVectorX)
-                	$("#TrackVectorY").text(data.TrackVectorY)
+                	$("#GuideVectorRA").text(data.GuideVectorRA)
+                	$("#OrthVectorDec").text(data.GuideVectorDec)
+
+                	$("#CalibrationDrift").text(data.CalibrationDrift)
 
                 	$("#StartedPosition").text(data.StartedPosition)
                 	$("#CurrentPosition").text(data.CurrentPosition)
@@ -89,7 +91,8 @@
 				    	if(previousAdjustmentUpdateTime != adjustmentUpdateTime) {
 				    		adjustment = parseFloat(data.CurrentAdjustment);
 				    		smoothedAdjustment = parseFloat(data.SmoothedAdjustment);
-				    		updateAdjustmentChart(adjustment, smoothedAdjustment);
+				    		adjustmentDec = parseFloat(data.AdjustmentDec)
+				    		updateAdjustmentChart(adjustment, smoothedAdjustment, adjustmentDec);
 				    		previousAdjustmentUpdateTime = adjustmentUpdateTime;
 				    	}
 				    }
@@ -193,6 +196,7 @@
 
 		var dpsAdjustment = [];
 		var dpsSmoothedAdjustment = [];
+		var dpsAdjustmentDec = [];
 
 		var adjustmentChart = new CanvasJS.Chart("adjustmentChartContainer", {
 			title :{
@@ -206,26 +210,33 @@
 			data: [{
 				type: "line", 
 				showInLegend : true,
-				legendText : "Adjustment",
+				legendText : "Adjustment RA",
 				dataPoints: dpsAdjustment
 			}, {
 				type: "line",
 				showInLegend : true,
-				legendText : "Smoothed",
+				legendText : "Smoothed RA",
 				dataPoints: dpsSmoothedAdjustment
+			}, {
+				type: "line",
+				showInLegend : true,
+				legendText : "Declination",
+				dataPoints: dpsAdjustmentDec
 			}]
 		});
 
 		var tAdjustment = 0;
-		var updateAdjustmentChart = function (adjustment, smoothedAdjustment) {
+		var updateAdjustmentChart = function (adjustment, smoothedAdjustment, adjustmentDec) {
 
 			dpsAdjustment.push({x:tAdjustment, y:adjustment});
 			dpsSmoothedAdjustment.push({x:tAdjustment, y:smoothedAdjustment});
+			dpsAdjustmentDec.push({x:tAdjustment, y:adjustmentDec})
 			tAdjustment++;
 
 			if (dpsAdjustment.length > dataLength) {
 				dpsAdjustment.shift();
 				dpsSmoothedAdjustment.shift();
+				dpsAdjustmentDec.shift();
 			}
 
 			adjustmentChart.render();
@@ -333,8 +344,9 @@
 		Mean Adjustment Factor: <span id="MeanAdjustment"></span> </br>
 		Failed Tracking Count: <span id="FailedTrackCount"></span> </br>
 		Max Pixel Value (raw): <span id="MaxPixelValue"></span></br>
-		Track Vector X: <span id="TrackVectorX"></span></br>
-		Track Vector Y: <span id="TrackVectorY"></span></br>
+		Guide Vector RA: <span id="GuideVectorRA"></span></br>
+		Orthogonal Guide Vector DEC: <span id="OrthVectorDec"></span></br>
+		Calibration Orth Drift (arc-s/s): <span id="CalibrationDrift"></span></br>
 		Started Tracking Position: <span id="StartedPosition"></span></br>
 		Current Tracking Position: <span id="CurrentPosition"></span></br>
 		Orthogonal Error: <span id="OrthogonalError"></span></br>

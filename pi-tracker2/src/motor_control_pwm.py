@@ -74,7 +74,7 @@ class MotorControl(threading.Thread):
     
     def set_speed_handler(self, message):
         self.current_speed = redis_helpers.fromRedis(message['data'])
-        print('orthogonal speed: ', self.current_speed)
+        # print('orthogonal speed: ', self.current_speed)
         if self.current_speed < 0:
             self.dir_pin.off()
         else:
@@ -85,11 +85,11 @@ class MotorControl(threading.Thread):
         else:   
             self.step_pin.value = 0.5
             if np.abs(self.current_speed) > 100:
-                print('macro')
+                # print('macro')
                 self.micro_pin.off()
                 self.step_pin.frequency = self.base_steps_per_second * np.abs(self.current_speed) / 16
             else:
-                print('micro')
+                # print('micro')
                 self.micro_pin.on() 
                 self.step_pin.frequency = self.base_steps_per_second * np.abs(self.current_speed)
             # print('frequency: ', self.step_pin.frequency)

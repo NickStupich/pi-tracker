@@ -20,7 +20,7 @@ class MotorControl(threading.Thread):
         p.subscribe(**{messages.STOP_ALL:self.stop_all_handler,
                 messages.CMD_ENABLE_MOVEMENT:self.enable_movement_handler,
                 messages.CMD_DISABLE_MOVEMENT:self.disable_movement_handler,
-                messages.CMD_SET_ADJUSTMENT_FACTOR:self.set_adjustment_factor_handler,
+                messages.CMD_SET_SPEED_ADJUSTMENT_RA:self.set_adjustment_factor_handler,
             })
 
         self.thread = p.run_in_thread(sleep_time = 0.01)
