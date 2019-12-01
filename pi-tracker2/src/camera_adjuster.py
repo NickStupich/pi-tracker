@@ -64,6 +64,7 @@ class CameraAdjuster(threading.Thread):
         p.subscribe(messages.CMD_STOP_GUIDING) 
         p.subscribe(messages.STATUS_CURRENT_TRACKING_POSITION)
         p.subscribe(messages.CMD_START_TRACKING)
+        p.subscribe(messages.STATUS_STARTING_TRACKING_POSITION)
 
         start_guiding_dir_1_start_time = None
         start_guiding_dir_1_start_location = None
@@ -86,7 +87,7 @@ class CameraAdjuster(threading.Thread):
 
                 elif channel == messages.CMD_START_GUIDING:
                     print('start guiding received')
-                    desired_location = None #will get grabbed first
+                    #desired_location = None #will get grabbed first
                     current_state = AdjusterStates.CMD_START_GUIDING
 
                     #TODO: publish state?
@@ -101,11 +102,16 @@ class CameraAdjuster(threading.Thread):
                     desired_location = None 
                     #publish state?
 
+                elif channel == messages.STATUS_STARTING_TRACKING_POSITION:
+                    desired_location = redis_helpers.fromRedis(data)
+                    print('adjuster got new desired location: ', desired_location)
+
                 elif channel == messages.STATUS_CURRENT_TRACKING_POSITION:
                     current_position = redis_helpers.fromRedis(data)
 
                     if desired_location is None:
-                        desired_location = current_position
+                        print('trying to track with no desired location?')
+                        #desired_location = current_position
                         continue
                     else:
                         shift = current_position - desired_location
@@ -118,7 +124,7 @@ class CameraAdjuster(threading.Thread):
                     elif current_state == AdjusterStates.CMD_START_GUIDING: #set up to calc guiding vector
                         r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(-1))
 
-                        desired_location = current_position
+                        #desired_location = current_position
                         #TODO: wait a frame or two?
 
                         start_guiding_dir_1_start_location = None
@@ -179,6 +185,7 @@ class CameraAdjuster(threading.Thread):
                                 r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0.))
                                 filtered_adjustment = 0 #reset
                                 current_state = AdjusterStates.START_GUIDING_DIR_ORTH_1
+                                guiding_dir_orth_start_time = None
                                 print('guiding...')
 
                     elif current_state in [AdjusterStates.START_GUIDING_DIR_ORTH_1, AdjusterStates.START_GUIDING_DIR_ORTH_2,
