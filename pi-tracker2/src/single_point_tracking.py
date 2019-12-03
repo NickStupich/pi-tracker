@@ -210,7 +210,8 @@ class SinglePointTracking(threading.Thread):
             if valid:
                 self.last_coords = current_location
                 self.r.publish(messages.STATUS_CURRENT_TRACKING_POSITION, redis_helpers.toRedis(current_location))
-        
+            else:
+                self.r.publish(messages.STATUS_CURRENT_TRACKING_POSITION, redis_helpers.toRedis(None))
         # self.last_coords = current_location
         # shift = (current_location[0] - self.starting_coords[0], current_location[1] - self.starting_coords[1])
         # self.shift_x = shift[0]
