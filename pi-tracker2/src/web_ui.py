@@ -95,14 +95,16 @@ def changeSettings():
     #MotorControl().set_ema_factor(ema_factor)
     return redirect('/')
 
-@app.route('/startRestartTracking', methods=['POST'])
+@socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
+    print('start tracking')
     r.publish(messages.CMD_START_TRACKING, "")
     return redirect('/')
 
 
-@app.route('/stopTracking', methods=['POST'])
+@socketio.on('stopTracking', namespace='/test')
 def stopTracking():
+    print('stop tracking')
     r.publish(messages.CMD_STOP_TRACKING, "")
     return redirect('/')
 
@@ -136,7 +138,6 @@ def subimg_video_feed():
 def disable_movement():
     r.publish(messages.CMD_DISABLE_MOVEMENT, "")
     return redirect('/')
-    
 
 @app.route('/enable_movement', methods=['POST'])
 def enable_movement():    
@@ -148,8 +149,6 @@ def start_following():
 
     r.publish(messages.CMD_START_GUIDING, "")
     return redirect('/')
-
-
 
 manual_adjust_speed_dec = 200
 manual_adjust_speed_ra = 500

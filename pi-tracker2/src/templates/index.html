@@ -6,218 +6,55 @@
 	<script type="text/javascript" src="{{url_for('static', filename='canvasjs.min.js') }}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='socket.io.js') }}"></script>
 
-	<style>
-
-		.button {
-		  border: none;
-		  color: white;
-		  padding: 15px 32px;
-		  text-align: center;
-		  text-decoration: none;
-		  display: inline-block;
-		  margin: 4px 2px;
-		  cursor: pointer;
-		  font-size: 20px;
-		  background-color:gray;
-		}
-
-		.button:focus{
-			background-color:gray;
-		}
-		.button:active{
-			background-color:red;
-		}
-	</style>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css') }}">
 
 	<script type="text/javascript">
-
 		$(document).ready(function(){
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+		    var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
 
-    simple_update_keys = ['STATUS_MAX_PIXEL_VALUE', 
-    	'STATUS_GUIDE_VECTOR_RA', 
-    	'STATUS_GUIDE_VECTOR_DEC', 
-    	'STATUS_CALIBRATION_DRIFT_ARC_SECONDS',
-    	'STATUS_FAILED_TRACKING_COUNT',
-		'STATUS_PARALLEL_ERROR',
-		'STATUS_ORTHOGONAL_ERROR',
-		'STATUS_DRIFT_X',
-		'STATUS_DRIFT_Y']
+		    simple_update_keys = ['STATUS_MAX_PIXEL_VALUE', 
+		    	'STATUS_GUIDE_VECTOR_RA', 
+		    	'STATUS_GUIDE_VECTOR_DEC', 
+		    	'STATUS_CALIBRATION_DRIFT_ARC_SECONDS',
+		    	'STATUS_FAILED_TRACKING_COUNT',
+				'STATUS_PARALLEL_ERROR',
+				'STATUS_ORTHOGONAL_ERROR',
+				'STATUS_DRIFT_X',
+				'STATUS_DRIFT_Y']
 
-    for (const key of simple_update_keys){
-    	socket.on(key, function(msg){
-	    	$("#" + key).text(msg.value);
-    	});
-    }
+		    for (const key of simple_update_keys){
+		    	socket.on(key, function(msg){
+			    	$("#" + key).text(msg.value);
+		    	});
+		    }
 
-    socket.on('STATUS_GUIDING_STATUS', function(msg) {
-		shiftX = parseFloat(msg.value.drift_x);
-		shiftY = parseFloat(msg.value.drift_y);
-		updateShiftChart(shiftX, shiftY);
+		    socket.on('STATUS_GUIDING_STATUS', function(msg) {
+				shiftX = parseFloat(msg.value.drift_x);
+				shiftY = parseFloat(msg.value.drift_y);
+				updateShiftChart(shiftX, shiftY);
 
-		parallelErr = parseFloat(msg.value.parallel_error);
-		orthogonalErr = parseFloat(msg.value.orthogonal_error);
-		updateErrorChart(parallelErr, orthogonalErr);
+				parallelErr = parseFloat(msg.value.parallel_error);
+				orthogonalErr = parseFloat(msg.value.orthogonal_error);
+				updateErrorChart(parallelErr, orthogonalErr);
 
-		adjustmentRA = parseFloat(msg.value.raw_adjustment_ra);
-		smoothAdjustmentRA = parseFloat(msg.value.filtered_adjustment_ra);
-		adjustmentDEC = parseFloat(msg.value.raw_adjustment_dec);
-		smoothAdjustmentDEC = parseFloat(msg.value.filtered_adjustment_dec);
-		updateAdjustmentChart(adjustmentRA, smoothAdjustmentRA, adjustmentDEC, smoothAdjustmentDEC);
+				adjustmentRA = parseFloat(msg.value.raw_adjustment_ra);
+				smoothAdjustmentRA = parseFloat(msg.value.filtered_adjustment_ra);
+				adjustmentDEC = parseFloat(msg.value.raw_adjustment_dec);
+				smoothAdjustmentDEC = parseFloat(msg.value.filtered_adjustment_dec);
+				updateAdjustmentChart(adjustmentRA, smoothAdjustmentRA, adjustmentDEC, smoothAdjustmentDEC);
+		    });
 
-    });
-
-		var dataLength = 500; // number of dataPoints visible at any point
-
-		var dpsParallel = [];
-		var dpsOrthogonal = [];
-
-		var errorChart = new CanvasJS.Chart("errorChartContainer", {
-			title :{
-				text: "Errors"
-			},
-			axisY: {
-				includeZero: true
-			},      
-			data: [{
-				type: "line",
-				showInLegend : true,
-				legendText : "Parallel",
-				dataPoints: dpsParallel
-			}, {
-				type: "line",
-				showInLegend : true,
-				legendText : "Orthogonal",
-				dataPoints: dpsOrthogonal
-			}]
+		    $("#startTrackingButton").change(function() {
+		    	var newValue = $(this).is(':checked');
+		    	if(newValue) {
+			    	socket.emit("startTracking");
+			    } else {
+			    	socket.emit("stopTracking");
+			    }
+		    })
 		});
-
-		var tError = 0;
-		var updateErrorChart = function (parallel, orthogonal) {
-			dpsParallel.push({x:tError, y:parallel});
-			dpsOrthogonal.push({x:tError, y:orthogonal});
-			tError++;
-
-			if (dpsParallel.length > dataLength) {
-				dpsParallel.shift();
-			}
-
-			if (dpsOrthogonal.length > dataLength) {
-				dpsOrthogonal.shift();
-			}
-
-			errorChart.render();
-		};
-
-
-
-		var dpsShiftX = [];
-		var dpsShiftY = [];
-
-		var shiftChart = new CanvasJS.Chart("shiftChartContainer", {
-			title :{
-				text: "Shifts"
-			},
-			axisY: [{
-				title : "X", 
-				includeZero: false
-			}, {
-				title : "Y", 
-				includeZero: false
-			}
-			],      
-			data: [{
-				type: "line",
-				axisYIndex : 0, 
-				showInLegend : true,
-				legendText : "X",
-				dataPoints: dpsShiftX
-			}, {
-				type: "line",
-				axisYIndex : 1, 
-				showInLegend : true,
-				legendText : "Y",
-				dataPoints: dpsShiftY
-			}]
-		});
-
-		var tShift = 0;
-		var updateShiftChart = function (shiftX, shiftY) {
-
-			dpsShiftX.push({x:tShift, y:shiftX});
-			dpsShiftY.push({x:tShift, y:shiftY});
-			tShift++;
-
-			if (dpsShiftX.length > dataLength) {
-				dpsShiftX.shift();
-			}
-
-			if (dpsShiftY.length > dataLength) {
-				dpsShiftY.shift();
-			}
-
-			shiftChart.render();
-		};
-
-
-		var dpsAdjustmentRA = [];
-		var dpsSmoothedAdjustmentRA = [];
-		var dpsAdjustmentDec = [];
-		var dpsSmoothedAdjustmentDec = [];
-
-		var adjustmentChart = new CanvasJS.Chart("adjustmentChartContainer", {
-			title :{
-				text: "Adjustments"
-			},
-			axisY: [{
-				title : "Factor", 
-				includeZero: false
-			}
-			],      
-			data: [{
-				type: "line", 
-				showInLegend : true,
-				legendText : "Adjustment RA",
-				dataPoints: dpsAdjustmentRA
-			}, {
-				type: "line",
-				showInLegend : true,
-				legendText : "Smoothed RA",
-				dataPoints: dpsSmoothedAdjustmentRA
-			}, {
-				type: "line",
-				showInLegend : true,
-				legendText : "Declination",
-				dataPoints: dpsAdjustmentDec
-			}, {
-				type: "line",
-				showInLegend : true,
-				legendText : "Smoothed Declination",
-				dataPoints: dpsSmoothedAdjustmentDec
-			}]
-		});
-
-		var tAdjustment = 0;
-		var updateAdjustmentChart = function (adjustmentRA, smoothedAdjustmentRA, adjustmentDec, smoothedAdjustmentDec) {
-
-			dpsAdjustmentRA.push({x:tAdjustment, y:adjustmentRA});
-			dpsSmoothedAdjustmentRA.push({x:tAdjustment, y:smoothedAdjustmentRA});
-			dpsAdjustmentDec.push({x:tAdjustment, y:adjustmentDec})
-			dpsSmoothedAdjustmentDec.push({x:tAdjustment, y:smoothedAdjustmentDec})
-			tAdjustment++;
-
-			if (dpsAdjustmentRA.length > dataLength) {
-				dpsAdjustmentRA.shift();
-				dpsSmoothedAdjustmentRA.shift();
-				dpsAdjustmentDec.shift();
-				dpsSmoothedAdjustmentDec.shift();
-			}
-
-			adjustmentChart.render();
-		};
-	});
-
 	</script>
+
 
   </head>
   <body>
@@ -273,8 +110,14 @@
 				<input type="submit" value= "Stop Tracking" ></div>
 	</form>
 
+	<div>
+		<span>Tracking </span>
+		<label class="switch" >
+		  <input type="checkbox" id="startTrackingButton">
+		  <span class="slider round"></span>
+		</label>
+	</div>
 
-	
 	<form action="/enable_movement" method="post">
 			<div class="input submit">
 				<input type="submit" value= "Enable Movement" ></div>
@@ -329,7 +172,157 @@
 <div id="errorChartContainer" style="height: 370px; width:700px;"></div>
 <div id="shiftChartContainer" style="height: 370px; width:700px;"></div>
 <div id="adjustmentChartContainer" style="height: 370px; width:700px;"></div>
-	
+<script type="text/javascript">
+	var dataLength = 500; // number of dataPoints visible at any point
+
+	var dpsParallel = [];
+	var dpsOrthogonal = [];
+
+	var errorChart = new CanvasJS.Chart("errorChartContainer", {
+		title :{
+			text: "Errors"
+		},
+		axisY: {
+			includeZero: true
+		},      
+		data: [{
+			type: "line",
+			showInLegend : true,
+			legendText : "Parallel",
+			dataPoints: dpsParallel
+		}, {
+			type: "line",
+			showInLegend : true,
+			legendText : "Orthogonal",
+			dataPoints: dpsOrthogonal
+		}]
+	});
+
+	var tError = 0;
+	var updateErrorChart = function (parallel, orthogonal) {
+		dpsParallel.push({x:tError, y:parallel});
+		dpsOrthogonal.push({x:tError, y:orthogonal});
+		tError++;
+
+		if (dpsParallel.length > dataLength) {
+			dpsParallel.shift();
+		}
+
+		if (dpsOrthogonal.length > dataLength) {
+			dpsOrthogonal.shift();
+		}
+
+		errorChart.render();
+	};
+
+
+
+	var dpsShiftX = [];
+	var dpsShiftY = [];
+
+	var shiftChart = new CanvasJS.Chart("shiftChartContainer", {
+		title :{
+			text: "Shifts"
+		},
+		axisY: [{
+			title : "X", 
+			includeZero: false
+		}, {
+			title : "Y", 
+			includeZero: false
+		}
+		],      
+		data: [{
+			type: "line",
+			axisYIndex : 0, 
+			showInLegend : true,
+			legendText : "X",
+			dataPoints: dpsShiftX
+		}, {
+			type: "line",
+			axisYIndex : 1, 
+			showInLegend : true,
+			legendText : "Y",
+			dataPoints: dpsShiftY
+		}]
+	});
+
+	var tShift = 0;
+	var updateShiftChart = function (shiftX, shiftY) {
+
+		dpsShiftX.push({x:tShift, y:shiftX});
+		dpsShiftY.push({x:tShift, y:shiftY});
+		tShift++;
+
+		if (dpsShiftX.length > dataLength) {
+			dpsShiftX.shift();
+		}
+
+		if (dpsShiftY.length > dataLength) {
+			dpsShiftY.shift();
+		}
+
+		shiftChart.render();
+	};
+
+
+	var dpsAdjustmentRA = [];
+	var dpsSmoothedAdjustmentRA = [];
+	var dpsAdjustmentDec = [];
+	var dpsSmoothedAdjustmentDec = [];
+
+	var adjustmentChart = new CanvasJS.Chart("adjustmentChartContainer", {
+		title :{
+			text: "Adjustments"
+		},
+		axisY: [{
+			title : "Factor", 
+			includeZero: false
+		}
+		],      
+		data: [{
+			type: "line", 
+			showInLegend : true,
+			legendText : "Adjustment RA",
+			dataPoints: dpsAdjustmentRA
+		}, {
+			type: "line",
+			showInLegend : true,
+			legendText : "Smoothed RA",
+			dataPoints: dpsSmoothedAdjustmentRA
+		}, {
+			type: "line",
+			showInLegend : true,
+			legendText : "Declination",
+			dataPoints: dpsAdjustmentDec
+		}, {
+			type: "line",
+			showInLegend : true,
+			legendText : "Smoothed Declination",
+			dataPoints: dpsSmoothedAdjustmentDec
+		}]
+	});
+
+	var tAdjustment = 0;
+	var updateAdjustmentChart = function (adjustmentRA, smoothedAdjustmentRA, adjustmentDec, smoothedAdjustmentDec) {
+
+		dpsAdjustmentRA.push({x:tAdjustment, y:adjustmentRA});
+		dpsSmoothedAdjustmentRA.push({x:tAdjustment, y:smoothedAdjustmentRA});
+		dpsAdjustmentDec.push({x:tAdjustment, y:adjustmentDec})
+		dpsSmoothedAdjustmentDec.push({x:tAdjustment, y:smoothedAdjustmentDec})
+		tAdjustment++;
+
+		if (dpsAdjustmentRA.length > dataLength) {
+			dpsAdjustmentRA.shift();
+			dpsSmoothedAdjustmentRA.shift();
+			dpsAdjustmentDec.shift();
+			dpsSmoothedAdjustmentDec.shift();
+		}
+
+		adjustmentChart.render();
+	};
+</script>
+
 
   </body>
 </html>
