@@ -2,6 +2,7 @@
 from importlib import import_module
 import os
 from flask import Flask, render_template, Response, redirect, request
+from flask_socketio import SocketIO, emit
 import numpy as np
 import cv2
 import logging
@@ -11,13 +12,11 @@ import time
 import redis_helpers
 import redis
 
+
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
-
-import updates_listener
-updates = updates_listener.UpdatesListener()
 
 new_logs = ""
 error_logs = ""
@@ -48,7 +47,15 @@ sys.stderr = Logger(sys.stderr, err_new_write)
 
 
 app = Flask(__name__)
+# async_mode = "eventlet"
+# async_mode = "gevent"
+async_mode = "threading"
+socketio = SocketIO(app, async_mode=async_mode, ping_timeout=30, logger=False, engineio_logger=False)
+
 r = redis.StrictRedis(host='localhost', port=6379) 
+
+import updates_listener
+updates = updates_listener.UpdatesListener(socketio)
 
 class ShutterSpeedForm(Form):
     speed = IntegerField('Shutter Speed:', validators=[validators.required()])
@@ -69,7 +76,7 @@ def index():
     shutterSpeedForm.subPixelFit.data = 0#Camera.subPixelFit
     shutterSpeedForm.ema_factor.data = 0# MotorControl.ema_factor
 
-    return render_template('index.html', camSettingsForm = shutterSpeedForm)
+    return render_template('index.html', camSettingsForm = shutterSpeedForm, async_mode=socketio.async_mode)
 
 @app.route('/changeSettings', methods=['POST'])
 def changeSettings():
@@ -208,4 +215,8 @@ def stop_following():
     return redirect('/')
 
 def run():
-    app.run(host='0.0.0.0', threaded=True)
+    # app.run(host='0.0.0.0', threaded=True)
+    socketio.run(app, debug=False)
+
+if __name__ == "__main__":
+    run()

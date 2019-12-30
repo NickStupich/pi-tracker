@@ -4,6 +4,7 @@
 
 	<script type="text/javascript" src="{{url_for('static', filename='jquery-1.7.1.min.js') }}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='canvasjs.min.js') }}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='socket.io.js') }}"></script>
 
 	<style>
 
@@ -28,9 +29,33 @@
 		}
 	</style>
 
-	<script>
+	<script type="text/javascript">
 
+		$(document).ready(function(){
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
 
+    simple_update_keys = ['STATUS_MAX_PIXEL_VALUE', 
+    	'STATUS_GUIDE_VECTOR_RA', 
+    	'STATUS_GUIDE_VECTOR_DEC', 
+    	'STATUS_CALIBRATION_DRIFT_ARC_SECONDS',
+    	'STATUS_FAILED_TRACKING_COUNT',
+		'STATUS_PARALLEL_ERROR',
+		'STATUS_ORTHOGONAL_ERROR',
+		'STATUS_DRIFT_X',
+		'STATUS_DRIFT_Y']
+
+    for (const key of simple_update_keys){
+    	socket.on(key, function(msg){
+	    	$("#" + key).text(msg.value);
+    	});
+    }
+
+    // socket.on('STATUS_MAX_PIXEL_VALUE', function(msg) {
+        // $("#STATUS_MAX_PIXEL_VALUE").text(msg.value)
+    // });
+});
+
+/*
 		window.onload = function () {
 
 
@@ -258,9 +283,11 @@
 		    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
 		    xmlHttp.send(null);
 		}
+		*/
 
 
 	</script>
+
   </head>
   <body>
   
@@ -340,17 +367,15 @@
 	</form>
 
 	<div id="update_params">
-
-		Mean Adjustment Factor: <span id="MeanAdjustment"></span> </br>
-		Failed Tracking Count: <span id="FailedTrackCount"></span> </br>
-		Max Pixel Value (raw): <span id="MaxPixelValue"></span></br>
-		Guide Vector RA: <span id="GuideVectorRA"></span></br>
-		Orthogonal Guide Vector DEC: <span id="OrthVectorDec"></span></br>
-		Calibration Orth Drift (arc-s/s): <span id="CalibrationDrift"></span></br>
-		Started Tracking Position: <span id="StartedPosition"></span></br>
-		Current Tracking Position: <span id="CurrentPosition"></span></br>
-		Orthogonal Error: <span id="OrthogonalError"></span></br>
-		Parallel Tracking Error: <span id="ParallelError"></span></br>
+		Failed Tracking Count: <span id="STATUS_FAILED_TRACKING_COUNT"></span> </br>
+		Max Pixel Value (raw): <span id="STATUS_MAX_PIXEL_VALUE"></span></br>
+		Guide Vector RA: <span id="STATUS_GUIDE_VECTOR_RA"></span></br>
+		Orthogonal Guide Vector DEC: <span id="STATUS_GUIDE_VECTOR_DEC"></span></br>
+		Calibration Orth Drift (arc-s/s): <span id="STATUS_CALIBRATION_DRIFT_ARC_SECONDS"></span></br>
+		Started Tracking Position: <span id="STATUS_STARTING_TRACKING_POSITION"></span></br>
+		Current Tracking Position: <span id="STATUS_CURRENT_TRACKING_POSITION"></span></br>
+		Orthogonal Error: <span id="STATUS_ORTHOGONAL_ERROR"></span></br>
+		Parallel Tracking Error: <span id="STATUS_PARALLEL_ERROR"></span></br>
 
 	</div>
 
@@ -359,14 +384,16 @@
 
 
   </div>
+
+
   <div style='margin-left:404px'>
     <img src="{{ url_for('subimg_video_feed') }}">
   </div>
-</div>
-  
+ 
   <div style="margin-top:10px; width:100%">
     <img src="{{ url_for('video_feed') }}">
 </div>
+
 
 <div id="errorChartContainer" style="height: 370px; width:700px;"></div>
 <div id="shiftChartContainer" style="height: 370px; width:700px;"></div>

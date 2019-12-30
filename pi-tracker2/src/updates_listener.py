@@ -7,7 +7,10 @@ import messages
 from flask.json import jsonify
 
 class UpdatesListener(object):
-    def __init__(self):
+    def __init__(self, socketio):
+
+        self.socketio = socketio
+
         self.current_values = {}
 
         r = redis.StrictRedis(host='localhost', port=6379) 
@@ -45,6 +48,10 @@ class UpdatesListener(object):
         raw_data = redis_helpers.fromRedis(message['data'])
         # print('update parameter: %s, value: %s' % (channel, raw_data))
 
+        string_value = str(raw_data)
+        # print('emitting: %s : %s' % (channel, string_value))
+        self.socketio.emit(channel, {'value': string_value}, namespace='/test')
+
         #TODO: format better?
         self.current_values[str(channel)] = str(raw_data)
 
@@ -55,15 +62,6 @@ class UpdatesListener(object):
         self.thread.stop()
 
     def current_values_json(self):
-
-        def format_number(x):
-            if isinstance(x, tuple):
-                return '\t'.join(map(format_number, x))
-            elif x is None:
-                return 'None'
-            else:
-                return '%.1f' % x
-
         return jsonify(
             FailedTrackCount = self.current_values[messages.STATUS_FAILED_TRACKING_COUNT],
             MeanAdjustment = str(7),#mc.tracking_factor),
@@ -86,3 +84,4 @@ class UpdatesListener(object):
             NewLogs = "",
             ErrorLogs = "",
             )
+
