@@ -16,33 +16,38 @@ class UpdatesListener(object):
         r = redis.StrictRedis(host='localhost', port=6379) 
         self.p = r.pubsub(ignore_subscribe_messages=True)
 
-        self.add_parameter(messages.STATUS_MAX_PIXEL_VALUE, -1)
-        self.add_parameter(messages.STATUS_CURRENT_TRACKING_POSITION, "")
-        self.add_parameter(messages.STATUS_STARTING_TRACKING_POSITION, "")
-        self.add_parameter(messages.CMD_SET_SHUTTER_SPEED, 300)
-        self.add_parameter(messages.CMD_SET_VISUAL_GAIN, 10)
-        self.add_parameter(messages.STATUS_CURRENT_RAW_ADJUSTMENT, 1)
-        self.add_parameter(messages.STATUS_PARALLEL_ERROR, 0)
-        self.add_parameter(messages.STATUS_ORTHOGONAL_ERROR, 0)
-        self.add_parameter(messages.STATUS_DRIFT_X)
-        self.add_parameter(messages.STATUS_DRIFT_Y)
-        self.add_parameter(messages.STATUS_GUIDE_VECTOR_RA)
-        self.add_parameter(messages.STATUS_GUIDE_VECTOR_DEC)
+        self.add_simple_parameter(messages.STATUS_MAX_PIXEL_VALUE, -1)
+        self.add_simple_parameter(messages.STATUS_CURRENT_TRACKING_POSITION, "")
+        self.add_simple_parameter(messages.STATUS_STARTING_TRACKING_POSITION, "")
+        self.add_simple_parameter(messages.CMD_SET_SHUTTER_SPEED, 300)
+        self.add_simple_parameter(messages.CMD_SET_VISUAL_GAIN, 10)
+        self.add_simple_parameter(messages.STATUS_CURRENT_RAW_ADJUSTMENT, 1)
+        self.add_simple_parameter(messages.STATUS_PARALLEL_ERROR, 0)
+        self.add_simple_parameter(messages.STATUS_ORTHOGONAL_ERROR, 0)
+        self.add_simple_parameter(messages.STATUS_DRIFT_X)
+        self.add_simple_parameter(messages.STATUS_DRIFT_Y)
+        self.add_simple_parameter(messages.STATUS_GUIDE_VECTOR_RA)
+        self.add_simple_parameter(messages.STATUS_GUIDE_VECTOR_DEC)
 
-        self.add_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_RA)
-        self.add_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_DEC)
+        self.add_simple_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_RA)
+        self.add_simple_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_DEC)
 
-        self.add_parameter(messages.STATUS_CALIBRATION_DRIFT_ARC_SECONDS)
-        self.add_parameter(messages.STATUS_FAILED_TRACKING_COUNT)
+        self.add_simple_parameter(messages.STATUS_CALIBRATION_DRIFT_ARC_SECONDS)
+        self.add_simple_parameter(messages.STATUS_FAILED_TRACKING_COUNT)
         
+        self.add_json_parameter(messages.STATUS_GUIDING_STATUS)
+
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler})
         self.thread = self.p.run_in_thread(sleep_time = 0.1)
 
-    def add_parameter(self, key, initialValue = ''):
+    def add_simple_parameter(self, key, initialValue = ''):
         self.current_values[key] = initialValue
-        self.p.subscribe(**{key : self.updateParameter})
+        self.p.subscribe(**{key : self.updateSimpleParameter})
 
-    def updateParameter(self, message):
+    def add_json_parameter(self, key):
+        self.p.subscribe(**{key : self.updateJsonParameter})
+
+    def updateSimpleParameter(self, message):
         channel = message['channel'].decode('ASCII')
         # print(channel)
         raw_data = redis_helpers.fromRedis(message['data'])
@@ -54,6 +59,19 @@ class UpdatesListener(object):
 
         #TODO: format better?
         self.current_values[str(channel)] = str(raw_data)
+
+    def updateJsonParameter(self, message):
+        channel = message['channel'].decode('ASCII')
+        # print(channel)
+        raw_data = redis_helpers.fromRedis(message['data'])
+        # print('update parameter: %s, value: %s' % (channel, raw_data))
+
+        # string_value = str(raw_data)
+
+        # print('emitting: %s : %s' % (channel, string_value))
+        self.socketio.emit(channel, {'value': raw_data}, namespace='/test')
+
+
 
     def getParameter(self, key):
         return self.current_values[key]

@@ -201,11 +201,12 @@ class CameraAdjuster(threading.Thread):
                                 # r.publish(messages.CMD_START_GUIDING)
 
                                 current_state = AdjusterStates.NOT_GUIDING
-                                new_speed_adjustment = 0
-                                adjustment = 0
+                                filtered_adjustment_ra = 0
+                                raw_adjustment_ra = 0
                                 parallel_distance = 0
                                 orthogonal_distance = 0
-                                orthogonal_adjustment = 0
+                                filtered_adjustment_dec = 0
+                                raw_adjustment_dec = 0
 
                                 r.publish(messages.STATUS_FAILED_TRACKING_COUNT, redis_helpers.toRedis(failed_track_count))
                         else:
@@ -222,17 +223,18 @@ class CameraAdjuster(threading.Thread):
                             else:   
                                 orthogonal_distance = np.dot(shift, guide_vector_orthogonal) / (np.linalg.norm(guide_vector_orthogonal)**2)
                             
-                            adjustment = parallel_distance / ADJUSTMENT_TARGET_SECONDS 
-                            adjustment = np.clip(adjustment, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
-                            filtered_adjustment = filtered_adjustment * ema_factor + adjustment * (1 - ema_factor)
-                            new_speed_adjustment = filtered_adjustment
+                            raw_adjustment_ra = parallel_distance / ADJUSTMENT_TARGET_SECONDS 
+                            clipped_adjustment = np.clip(raw_adjustment_ra, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
+                            filtered_adjustment = filtered_adjustment * ema_factor + clipped_adjustment * (1 - ema_factor)
+                            filtered_adjustment_ra = filtered_adjustment
 
                             if current_state == AdjusterStates.START_GUIDING_DIR_ORTH_1:                                
                                 if guiding_dir_orth_start_time is None:
                                     print('starting guiding for orthogonal')
                                     guiding_dir_orth_start_time = datetime.now()
                                     guiding_dir_orth_start_location = current_position
-                                    orthogonal_adjustment = -1
+                                    filtered_adjustment_dec = -1
+                                    raw_adjustment_dec = -1
                                 else:
                                     elapsed_time_seconds = (datetime.now() - guiding_dir_orth_start_time).total_seconds()
                                     print('orth guide vector estimating time: ', elapsed_time_seconds)
@@ -248,14 +250,16 @@ class CameraAdjuster(threading.Thread):
                                         r.publish(messages.STATUS_GUIDE_VECTOR_DEC, redis_helpers.toRedis(guide_vector_orthogonal))
 
                                         current_state = AdjusterStates.GUIDING
-                                        orthogonal_adjustment = 1 #start speeding back towards origin
+                                        filtered_adjustment_dec = 1 #start speeding back towards origin
+                                        raw_adjustment_dec = 1
 
                             elif current_state == AdjusterStates.START_GUIDING_DIR_ORTH_2:
                                 print('dir_orth_2, orth distance = ', orthogonal_distance)
 
                                 if orthogonal_distance < 0:
                                     print('back to origin, moving to guiding')
-                                    orthogonal_adjustment = 0
+                                    filtered_adjustment_dec = 0
+                                    raw_adjustment_dec = 0
                                     current_state = AdjusterStates.GUIDING
 
                                 #TODO: back to original position
@@ -265,15 +269,23 @@ class CameraAdjuster(threading.Thread):
                                 orthogonal_vector = shift - parallel_distance * guide_vector                        
 
                                 #TODO: filter realllll slow instead of just making it slow
-                                orthogonal_adjustment = orthogonal_distance / ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS
-                                orthogonal_adjustment = np.clip(orthogonal_adjustment, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
+                                raw_adjustment_dec = orthogonal_distance / ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS
+                                filtered_adjustment_dec = np.clip(raw_adjustment_dec, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
 
 
-                        r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(new_speed_adjustment))
-                        r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(adjustment))
+                        r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(filtered_adjustment_ra))
+                        r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(raw_adjustment_ra))
                         r.publish(messages.STATUS_PARALLEL_ERROR, redis_helpers.toRedis(parallel_distance))
                         r.publish(messages.STATUS_ORTHOGONAL_ERROR, redis_helpers.toRedis(orthogonal_distance))
-                        r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(orthogonal_adjustment))
+                        r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(filtered_adjustment_dec))
+
+                        guiding_status = {'drift_x' : str(shift[1]), 'drift_y' : str(shift[0]), 
+                                        'parallel_error' : str(parallel_distance), 'orthogonal_error' : str(orthogonal_distance),
+                                        'raw_adjustment_ra' : str(raw_adjustment_ra), 'filtered_adjustment_ra' : str(filtered_adjustment_ra),
+                                        'raw_adjustment_dec' : str(raw_adjustment_dec), 'filtered_adjustment_dec' : str(filtered_adjustment_dec)
+                                        }
+                        r.publish(messages.STATUS_GUIDING_STATUS, redis_helpers.toRedis(guiding_status))
+
 
                     else:
                         print('unknown state: ', current_state)

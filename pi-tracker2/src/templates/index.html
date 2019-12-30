@@ -50,81 +50,22 @@
     	});
     }
 
-    // socket.on('STATUS_MAX_PIXEL_VALUE', function(msg) {
-        // $("#STATUS_MAX_PIXEL_VALUE").text(msg.value)
-    // });
-});
+    socket.on('STATUS_GUIDING_STATUS', function(msg) {
+		shiftX = parseFloat(msg.value.drift_x);
+		shiftY = parseFloat(msg.value.drift_y);
+		updateShiftChart(shiftX, shiftY);
 
-/*
-		window.onload = function () {
+		parallelErr = parseFloat(msg.value.parallel_error);
+		orthogonalErr = parseFloat(msg.value.orthogonal_error);
+		updateErrorChart(parallelErr, orthogonalErr);
 
+		adjustmentRA = parseFloat(msg.value.raw_adjustment_ra);
+		smoothAdjustmentRA = parseFloat(msg.value.filtered_adjustment_ra);
+		adjustmentDEC = parseFloat(msg.value.raw_adjustment_dec);
+		smoothAdjustmentDEC = parseFloat(msg.value.filtered_adjustment_dec);
+		updateAdjustmentChart(adjustmentRA, smoothAdjustmentRA, adjustmentDEC, smoothAdjustmentDEC);
 
-		previousErrorUpdateTime = "";
-		previousShiftUpdateTime = "";
-		previousAdjustmentUpdateTime = "";
-
-		function update_values() {
-	        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-            $.getJSON($SCRIPT_ROOT+"/updates",
-                function(data) {
-                   
-                	$("#MeanAdjustment").text(data.MeanAdjustment)
-                	$("#FailedTrackCount").text(data.FailedTrackCount)
-                	$("#MaxPixelValue").text(data.MaxPixelValue)
-
-                	$("#GuideVectorRA").text(data.GuideVectorRA)
-                	$("#OrthVectorDec").text(data.GuideVectorDec)
-
-                	$("#CalibrationDrift").text(data.CalibrationDrift)
-
-                	$("#StartedPosition").text(data.StartedPosition)
-                	$("#CurrentPosition").text(data.CurrentPosition)
- 
-                	$("#ParallelError").text(data.ParallelError)
-                	$("#OrthogonalError").text(data.OrthogonalError)
-                	$("#NewLogs").append(data.NewLogs) 
-                	$("#ErrorLogs").append(data.ErrorLogs) 
-
-                	elem = document.getElementById('NewLogs')
-				    elem.scrollTop = elem.scrollHeight;
-
-
-				    shiftUpdateTime = data.ShiftUpdateTime
-				    if(data.ShiftX != "None") {
-				    	if(previousShiftUpdateTime != shiftUpdateTime) {
-				    		shiftX = parseFloat(data.ShiftX);
-				    		shiftY = parseFloat(data.ShiftY);
-				    		updateShiftChart(shiftX, shiftY);
-				    		previousShiftUpdateTime = shiftUpdateTime;
-				    	}
-				    }
-
-
-				    errorUpdateTime = data.ErrorUpdateTime
-				    if(data.ParallelError != "None") {
-				    	if(previousErrorUpdateTime != errorUpdateTime) {
-				    		parErr = parseFloat(data.ParallelError);
-				    		orthErr = parseFloat(data.OrthogonalError);
-				    		updateErrorChart(parErr, orthErr);
-				    		previousErrorUpdateTime = errorUpdateTime;
-				    	}
-				    }
-
-
-				    adjustmentUpdateTime = data.AdjustmentUpdateTime
-				    if(data.CurrentAdjustment != "None") {
-				    	if(previousAdjustmentUpdateTime != adjustmentUpdateTime) {
-				    		adjustment = parseFloat(data.CurrentAdjustment);
-				    		smoothedAdjustment = parseFloat(data.SmoothedAdjustment);
-				    		adjustmentDec = parseFloat(data.AdjustmentDec)
-				    		updateAdjustmentChart(adjustment, smoothedAdjustment, adjustmentDec);
-				    		previousAdjustmentUpdateTime = adjustmentUpdateTime;
-				    	}
-				    }
-
-                });
-        }
-
+    });
 
 		var dataLength = 500; // number of dataPoints visible at any point
 
@@ -219,9 +160,10 @@
 		};
 
 
-		var dpsAdjustment = [];
-		var dpsSmoothedAdjustment = [];
+		var dpsAdjustmentRA = [];
+		var dpsSmoothedAdjustmentRA = [];
 		var dpsAdjustmentDec = [];
+		var dpsSmoothedAdjustmentDec = [];
 
 		var adjustmentChart = new CanvasJS.Chart("adjustmentChartContainer", {
 			title :{
@@ -236,55 +178,44 @@
 				type: "line", 
 				showInLegend : true,
 				legendText : "Adjustment RA",
-				dataPoints: dpsAdjustment
+				dataPoints: dpsAdjustmentRA
 			}, {
 				type: "line",
 				showInLegend : true,
 				legendText : "Smoothed RA",
-				dataPoints: dpsSmoothedAdjustment
+				dataPoints: dpsSmoothedAdjustmentRA
 			}, {
 				type: "line",
 				showInLegend : true,
 				legendText : "Declination",
 				dataPoints: dpsAdjustmentDec
+			}, {
+				type: "line",
+				showInLegend : true,
+				legendText : "Smoothed Declination",
+				dataPoints: dpsSmoothedAdjustmentDec
 			}]
 		});
 
 		var tAdjustment = 0;
-		var updateAdjustmentChart = function (adjustment, smoothedAdjustment, adjustmentDec) {
+		var updateAdjustmentChart = function (adjustmentRA, smoothedAdjustmentRA, adjustmentDec, smoothedAdjustmentDec) {
 
-			dpsAdjustment.push({x:tAdjustment, y:adjustment});
-			dpsSmoothedAdjustment.push({x:tAdjustment, y:smoothedAdjustment});
+			dpsAdjustmentRA.push({x:tAdjustment, y:adjustmentRA});
+			dpsSmoothedAdjustmentRA.push({x:tAdjustment, y:smoothedAdjustmentRA});
 			dpsAdjustmentDec.push({x:tAdjustment, y:adjustmentDec})
+			dpsSmoothedAdjustmentDec.push({x:tAdjustment, y:smoothedAdjustmentDec})
 			tAdjustment++;
 
-			if (dpsAdjustment.length > dataLength) {
-				dpsAdjustment.shift();
-				dpsSmoothedAdjustment.shift();
+			if (dpsAdjustmentRA.length > dataLength) {
+				dpsAdjustmentRA.shift();
+				dpsSmoothedAdjustmentRA.shift();
 				dpsAdjustmentDec.shift();
+				dpsSmoothedAdjustmentDec.shift();
 			}
 
 			adjustmentChart.render();
 		};
-
-        setInterval(update_values, 1000);
-		}
-
-
-
-
-		function httpGetAsync(theUrl, callback)
-		{
-		    var xmlHttp = new XMLHttpRequest();
-		    xmlHttp.onreadystatechange = function() { 
-		        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-		            callback(xmlHttp.responseText);
-		    }
-		    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
-		    xmlHttp.send(null);
-		}
-		*/
-
+	});
 
 	</script>
 
