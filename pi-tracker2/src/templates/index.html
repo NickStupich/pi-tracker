@@ -51,10 +51,39 @@
 			    } else {
 			    	socket.emit("stopTracking");
 			    }
-		    })
+		    });
+
+		    $("#enableMovementButton").change(function() {
+		    	var newValue = $(this).is(':checked');
+		    	if(newValue) {
+			    	socket.emit("enable_movement");
+			    } else {
+			    	socket.emit("disable_movement");
+			    }
+		    });
+
+
+		    $("#enableGuidingButton").change(function() {
+		    	var newValue = $(this).is(':checked');
+		    	if(newValue) {
+			    	socket.emit("start_guiding");
+			    } else {
+			    	socket.emit("stop_guiding");
+			    }
+		    });
+
+		    $("#shutterSpeedInput").change(function() {
+		    	var newValue = $(this).val();
+		    	socket.emit('set_shutter_speed', newValue);
+		    });
+
+		    $("#visualGainInput").change(function() {
+		    	var newValue = $(this).val();
+		    	socket.emit('set_visual_gain', newValue);
+		    });
+
 		});
 	</script>
-
 
   </head>
   <body>
@@ -74,42 +103,15 @@
 </div>
 </div>
 
+	<div>
+		Shutter Speed: <input id="shutterSpeedInput" type="number" value="200"/>
+	</div>
+
+	<div>
+		Visual Gain: <input id="visualGainInput" type="number" value="10"/>
+	</div>
+
   <div style='width:400px; float:left'>
-	<form action="/changeSettings" method="post">
-	            {{ camSettingsForm.csrf }}
-	<div class="input text">
-	        {{ camSettingsForm.speed.label }} {{ camSettingsForm.speed }}</div>
-
-	<div class="input text">
-	        {{ camSettingsForm.visual_gain.label }} {{ camSettingsForm.visual_gain }}</div>
-
-	<div class="checkbox">
-	        {{ camSettingsForm.save.label }} {{ camSettingsForm.save }} </div>
-            
-    <div class="checkbox">
-			{{ camSettingsForm.overlay_tracking_history.label }} {{ camSettingsForm.overlay_tracking_history }} </div>
-
-    <div class="checkbox">
-			{{ camSettingsForm.subPixelFit.label }} {{ camSettingsForm.subPixelFit }} </div>
-	        
-	<div class="input text">
-			{{ camSettingsForm.ema_factor.label }} {{ camSettingsForm.ema_factor }} </div>
-
-	<div class="input submit">
-	                <input type="submit" value="Update"></div>
-	</form>
-
-	
-	<form action="/startRestartTracking" method="post">
-			<div class="input submit">
-				<input type="submit" value= "Start/Restart Tracking" ></div>
-	</form>
-
-	<form action="/stopTracking" method="post">
-			<div class="input submit">
-				<input type="submit" value= "Stop Tracking" ></div>
-	</form>
-
 	<div>
 		<span>Tracking </span>
 		<label class="switch" >
@@ -118,27 +120,21 @@
 		</label>
 	</div>
 
-	<form action="/enable_movement" method="post">
-			<div class="input submit">
-				<input type="submit" value= "Enable Movement" ></div>
-	</form>
+	<div>
+		<span>Movement </span>
+		<label class="switch" >
+		  <input type="checkbox" id="enableMovementButton" checked=true>
+		  <span class="slider round"></span>
+		</label>
+	</div>
 
-	<form action="/disable_movement" method="post">
-			<div class="input submit">
-				<input type="submit" value= "Disable Movement" ></div>
-	</form>
-
-
-	
-	<form action="/start_following" method="post">
-			<div class="input submit">
-				<input type="submit" value= "Start Guiding" ></div>
-	</form>
-
-	<form action="/stop_following" method="post">
-			<div class="input submit">
-				<input type="submit" value= "Stop Guiding" ></div>
-	</form>
+	<div>
+		<span>Guiding </span>
+		<label class="switch" >
+		  <input type="checkbox" id="enableGuidingButton">
+		  <span class="slider round"></span>
+		</label>
+	</div>
 
 	<div id="update_params">
 		Failed Tracking Count: <span id="STATUS_FAILED_TRACKING_COUNT"></span> </br>
@@ -150,15 +146,11 @@
 		Current Tracking Position: <span id="STATUS_CURRENT_TRACKING_POSITION"></span></br>
 		Orthogonal Error: <span id="STATUS_ORTHOGONAL_ERROR"></span></br>
 		Parallel Tracking Error: <span id="STATUS_PARALLEL_ERROR"></span></br>
-
 	</div>
 
 	<div id="NewLogs" style="height:300px;width:400px;overflow:auto;">Logs</div>
 	<div id="ErrorLogs" style="height:300px;width:400px;overflow:auto;color:red">Errors</div>
-
-
   </div>
-
 
   <div style='margin-left:404px'>
     <img src="{{ url_for('subimg_video_feed') }}">
@@ -167,7 +159,6 @@
   <div style="margin-top:10px; width:100%">
     <img src="{{ url_for('video_feed') }}">
 </div>
-
 
 <div id="errorChartContainer" style="height: 370px; width:700px;"></div>
 <div id="shiftChartContainer" style="height: 370px; width:700px;"></div>
@@ -322,7 +313,6 @@
 		adjustmentChart.render();
 	};
 </script>
-
 
   </body>
 </html>

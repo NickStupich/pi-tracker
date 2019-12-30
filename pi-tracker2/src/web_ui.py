@@ -45,7 +45,6 @@ class Logger(object):
 sys.stdout = Logger(sys.stdout, log_new_write)
 sys.stderr = Logger(sys.stderr, err_new_write)
 
-
 app = Flask(__name__)
 # async_mode = "eventlet"
 # async_mode = "gevent"
@@ -57,60 +56,29 @@ r = redis.StrictRedis(host='localhost', port=6379)
 import updates_listener
 updates = updates_listener.UpdatesListener(socketio)
 
-class ShutterSpeedForm(Form):
-    speed = IntegerField('Shutter Speed:', validators=[validators.required()])
-    save = BooleanField('Save')
-    visual_gain = IntegerField('Visual Gain:')
-    overlay_tracking_history = BooleanField('Overlay tracking history')
-    subPixelFit = BooleanField('Sub Pixel Fit')
-    ema_factor = FloatField('Ema factor:')
-
 @app.route('/')
 def index():
-    
-    shutterSpeedForm = ShutterSpeedForm()
-    shutterSpeedForm.speed.data = updates.getParameter(messages.CMD_SET_SHUTTER_SPEED)
-    shutterSpeedForm.save.data = 0#Camera.save_images
-    shutterSpeedForm.visual_gain.data = updates.getParameter(messages.CMD_SET_VISUAL_GAIN)
-    shutterSpeedForm.overlay_tracking_history.data = 0#Camera.overlay_tracking_history
-    shutterSpeedForm.subPixelFit.data = 0#Camera.subPixelFit
-    shutterSpeedForm.ema_factor.data = 0# MotorControl.ema_factor
+    return render_template('index.html', async_mode=socketio.async_mode)
 
-    return render_template('index.html', camSettingsForm = shutterSpeedForm, async_mode=socketio.async_mode)
+@socketio.on('set_shutter_speed', namespace='/test')
+def setShutterSpeed(value):
+    r.publish(messages.CMD_SET_SHUTTER_SPEED, redis_helpers.toRedis(int(value)))
 
-@app.route('/changeSettings', methods=['POST'])
-def changeSettings():
-    print('changeSettings()')
-    newSpeed = int(request.form['speed'])
-    newVisualGain = int(request.form['visual_gain'])
-    save = (request.form['save'] == 'y') if 'save' in request.form else False
-    overlay_tracking_history = (request.form['overlay_tracking_history'] == 'y') if 'overlay_tracking_history' in request.form else False
-    subPixelFit = (request.form['subPixelFit'] == 'y') if 'subPixelFit' in request.form else False
-    ema_factor = float(request.form['ema_factor'])
-    #Camera.update_settings(newSpeed, newVisualGain, save, overlay_tracking_history, subPixelFit)
-    
-    r.publish(messages.CMD_SET_SHUTTER_SPEED, redis_helpers.toRedis(newSpeed))
-    r.publish(messages.CMD_SET_VISUAL_GAIN, redis_helpers.toRedis(newVisualGain))
-    
-    #MotorControl().set_ema_factor(ema_factor)
-    return redirect('/')
+@socketio.on('set_visual_gain', namespace='/test')
+def setVisualGain(value):
+    r.publish(messages.CMD_SET_VISUAL_GAIN, redis_helpers.toRedis(int(value)))
 
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
-    print('start tracking')
     r.publish(messages.CMD_START_TRACKING, "")
     return redirect('/')
 
-
 @socketio.on('stopTracking', namespace='/test')
 def stopTracking():
-    print('stop tracking')
     r.publish(messages.CMD_STOP_TRACKING, "")
     return redirect('/')
 
 def gen_frame(msg_type):
-
-    # print('gen_frame: ', msg_type)
     r2 = redis.StrictRedis(host='localhost', port=6379) 
     p = r2.pubsub(ignore_subscribe_messages=True)
     p.subscribe(msg_type)
@@ -134,20 +102,24 @@ def subimg_video_feed():
     return Response(gen_frame(messages.NEW_SUB_PREVIEW_FRAME), 
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/disable_movement', methods=['POST'])
+@socketio.on('disable_movement', namespace='/test')
 def disable_movement():
     r.publish(messages.CMD_DISABLE_MOVEMENT, "")
     return redirect('/')
 
-@app.route('/enable_movement', methods=['POST'])
+@socketio.on('enable_movement', namespace='/test')
 def enable_movement():    
     r.publish(messages.CMD_ENABLE_MOVEMENT, "")
     return redirect('/')
-    
-@app.route('/start_following', methods=['POST'])
-def start_following():
 
+@socketio.on('start_guiding', namespace='/test')
+def start_guiding():
     r.publish(messages.CMD_START_GUIDING, "")
+    return redirect('/')
+
+@socketio.on('stop_guiding', namespace='/test')
+def stop_guiding():
+    r.publish(messages.CMD_STOP_GUIDING, "")
     return redirect('/')
 
 manual_adjust_speed_dec = 200
@@ -194,27 +166,7 @@ def ra_forward_stop():
     print('ra_forward_stop()')
     return ""
 
-
-
-@app.route('/updates', methods= ['GET'])
-def update_status():
-    global new_logs, error_logs
-    global max_pixel_value
-    logs_copy = new_logs
-    errors_copy = error_logs
-    error_logs = ""
-    new_logs = ""
-
-    return updates.current_values_json()
-
-
-@app.route('/stop_following', methods=['POST'])
-def stop_following():
-    r.publish(messages.CMD_STOP_GUIDING, "")
-    return redirect('/')
-
 def run():
-    # app.run(host='0.0.0.0', threaded=True)
     socketio.run(app, debug=False)
 
 if __name__ == "__main__":
