@@ -125,7 +125,7 @@ def stop_guiding():
 @socketio.on('dec_back_start', namespace='/test')
 def dec_back_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(-speed))
-    print('dec_back_start()')
+    print('dec_back_start()', speed)
     return ""
 @socketio.on('dec_back_stop', namespace='/test')
 def dec_back_stop():
@@ -135,7 +135,7 @@ def dec_back_stop():
 @socketio.on('dec_forward_start', namespace='/test')
 def dec_forward_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(speed))
-    print('dec_forward_start()')
+    print('dec_forward_start()', speed)
     return ""
 @socketio.on('dec_forward_stop', namespace='/test')
 def dec_forward_stop():
@@ -146,7 +146,7 @@ def dec_forward_stop():
 @socketio.on('ra_back_start', namespace='/test')
 def ra_back_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(-speed))
-    print('ra_back_start()')
+    print('ra_back_start()', speed)
     return ""
 @socketio.on('ra_back_stop', namespace='/test')
 def ra_back_stop():
@@ -156,7 +156,7 @@ def ra_back_stop():
 @socketio.on('ra_forward_start', namespace='/test')
 def ra_forward_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(speed))
-    print('ra_forward_start()')
+    print('ra_forward_start()', speed)
     return ""
 @socketio.on('ra_forward_stop', namespace='/test')
 def ra_forward_stop():

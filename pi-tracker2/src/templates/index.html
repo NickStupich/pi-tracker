@@ -82,7 +82,8 @@
 		    	socket.emit('set_visual_gain', newValue);
 		    });
 
-		    var adjust_speed = 200; //TODO: add slider
+		    var adjust_speed = 100;
+		    
 		    $("#dec_back_button").bind("mousedown touchstart", function() {
 		    	socket.emit("dec_back_start", adjust_speed);
 		    });
@@ -109,6 +110,13 @@
 		    	socket.emit("ra_forward_stop");
 		    });
 
+		    $("#speedRangeSlider").change(function() {
+		    	var newValue = parseFloat($(this).val());
+		    	$("#speedRangeValue").text(newValue);
+		    	adjust_speed = newValue;
+		    	console.log(newValue);
+		    });
+
 		});
 	</script>
 
@@ -118,23 +126,20 @@
   <div style="width:100%">
 
 <div>
-<div>
-	Declination
-	<button type="button" class="button" id="dec_back_button">Back</button>
-	<button type="button" class="button" id="dec_forward_button">Forward</button>
-	<!--
-	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/dec_back_start')" onmousedown="$.get($SCRIPT_ROOT + '/dec_back_start')" ontouchend="$.get($SCRIPT_ROOT + '/dec_back_stop')" onmouseup="$.get($SCRIPT_ROOT + '/dec_back_stop')">Back</button>
-	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/dec_forward_start')" onmousedown="$.get($SCRIPT_ROOT + '/dec_forward_start')" ontouchend="$.get($SCRIPT_ROOT + '/dec_forward_stop')" onmouseup="$.get($SCRIPT_ROOT + '/dec_forward_stop')">Forward</button>-->
-</div>
-<div>
-	RA
-	<button type="button" class="button" id="ra_back_button">Back</button>
-	<button type="button" class="button" id="ra_forward_button">Forward</button>
-	<!--
-	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/ra_back_start')" onmousedown="$.get($SCRIPT_ROOT + '/ra_back_start')" ontouchend="$.get($SCRIPT_ROOT + '/dec_back_stop')" onmouseup="$.get($SCRIPT_ROOT + '/ra_back_stop')">Back</button>
-	<button type="button" class="button" ontouchstart="$.get($SCRIPT_ROOT + '/ra_forward_start')" onmousedown="$.get($SCRIPT_ROOT + '/ra_forward_start')" ontouchend="$.get($SCRIPT_ROOT + '/ra_forward_end')" onmouseup="$.get($SCRIPT_ROOT + '/ra_forward_stop')">Forward</button>
-	-->
-</div>
+	<div class="numeric_slidecontainer">
+	  <input type="range" min="10" max="1000" value="100" class="numeric_slider" id="speedRangeSlider">
+	  <span id="speedRangeValue">100</span>
+	</div>
+	<div>
+		Declination
+		<button type="button" class="button" id="dec_back_button">Back</button>
+		<button type="button" class="button" id="dec_forward_button">Forward</button>
+	</div>
+	<div>
+		RA
+		<button type="button" class="button" id="ra_back_button">Back</button>
+		<button type="button" class="button" id="ra_forward_button">Forward</button>
+	</div>
 </div>
 
 	<div>
