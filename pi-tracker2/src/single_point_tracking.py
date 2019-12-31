@@ -153,7 +153,7 @@ class SinglePointTracking(threading.Thread):
 
     def run(self):
         self.r = redis.StrictRedis(host='localhost', port=6379) 
-        p = self.r.pubsub(ignore_subscribe_messages=True)
+        p = self.r.pubsub(ignore_subscribe_messages=True)   
 
         p.subscribe(messages.STOP_ALL)
         p.subscribe(messages.CMD_START_TRACKING)

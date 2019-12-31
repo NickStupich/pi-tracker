@@ -83,7 +83,6 @@
 		    });
 
 		    var adjust_speed = 100;
-		    
 		    $("#dec_back_button").bind("mousedown touchstart", function() {
 		    	socket.emit("dec_back_start", adjust_speed);
 		    });
@@ -110,12 +109,36 @@
 		    	socket.emit("ra_forward_stop");
 		    });
 
+
 		    $("#speedRangeSlider").change(function() {
 		    	var newValue = parseFloat($(this).val());
 		    	$("#speedRangeValue").text(newValue);
 		    	adjust_speed = newValue;
 		    	console.log(newValue);
 		    });
+
+		    $("#ditheringMagnitudeInput").change(function() {
+		    	var newValue = parseFloat($(this).val());
+		    	socket.emit('set_dithering_magnitude', newValue);
+		    });
+
+		    $("#ditheringIntervalInput").change(function() {
+		    	var newValue = parseFloat($(this).val());
+		    	socket.emit('set_dithering_interval', newValue);
+		    });
+
+
+		    $("#enableDitheringButton").change(function() {
+		    	var newValue = $(this).is(':checked');
+		    	if(newValue) {
+			    	socket.emit("enable_dithering");
+			    	console.log('enable dithering');
+			    } else {
+			    	socket.emit("disable_dithering");
+			    	console.log('disable dithering');
+			    }
+		    });
+
 
 		});
 	</script>
@@ -127,6 +150,7 @@
 
 <div>
 	<div class="numeric_slidecontainer">
+	  Movement Speed: 
 	  <input type="range" min="10" max="1000" value="100" class="numeric_slider" id="speedRangeSlider">
 	  <span id="speedRangeValue">100</span>
 	</div>
@@ -173,6 +197,24 @@
 		  <input type="checkbox" id="enableGuidingButton">
 		  <span class="slider round"></span>
 		</label>
+	</div>
+
+
+	<div>
+		<span>Dithering </span>
+		<label class="switch" >
+		  <input type="checkbox" id="enableDitheringButton">
+		  <span class="slider round"></span>
+		</label>
+
+		<div>
+			Dithering Magnitude: <input id="ditheringMagnitudeInput" type="number" value="1"/>
+		</div>
+
+		<div>
+			Dithering Interval (s): <input id="ditheringIntervalInput" type="number" value="12"/>
+		</div>
+
 	</div>
 
 	<div id="update_params">

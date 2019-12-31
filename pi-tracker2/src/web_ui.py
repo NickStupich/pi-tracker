@@ -71,12 +71,10 @@ def setVisualGain(value):
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
     r.publish(messages.CMD_START_TRACKING, "")
-    return redirect('/')
 
 @socketio.on('stopTracking', namespace='/test')
 def stopTracking():
     r.publish(messages.CMD_STOP_TRACKING, "")
-    return redirect('/')
 
 def gen_frame(msg_type):
     r2 = redis.StrictRedis(host='localhost', port=6379) 
@@ -105,64 +103,59 @@ def subimg_video_feed():
 @socketio.on('disable_movement', namespace='/test')
 def disable_movement():
     r.publish(messages.CMD_DISABLE_MOVEMENT, "")
-    return redirect('/')
 
 @socketio.on('enable_movement', namespace='/test')
 def enable_movement():    
     r.publish(messages.CMD_ENABLE_MOVEMENT, "")
-    return redirect('/')
 
 @socketio.on('start_guiding', namespace='/test')
 def start_guiding():
     r.publish(messages.CMD_START_GUIDING, "")
-    return redirect('/')
 
 @socketio.on('stop_guiding', namespace='/test')
 def stop_guiding():
     r.publish(messages.CMD_STOP_GUIDING, "")
-    return redirect('/')
 
+@socketio.on('enable_dithering', namespace='/test')
+def enable_dithering():
+    r.publish(messages.CMD_START_DITHERING, "")
+
+@socketio.on('disable_dithering', namespace='/test')
+def disable_dithering():
+    r.publish(messages.CMD_STOP_DITHERING, "")
+
+@socketio.on('set_dithering_magnitude', namespace='/test')
+def set_dithering_magnitude(magnitude):
+    r.publish(messages.CMD_SET_DITHERING_MAGNITUDE, redis_helpers.toRedis(magnitude))
+
+@socketio.on('set_dithering_interval', namespace='/test')
+def set_dithering_interval(seconds):
+    r.publish(messages.CMD_SET_DITHERING_INTERVAL, redis_helpers.toRedis(seconds))
 @socketio.on('dec_back_start', namespace='/test')
 def dec_back_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(-speed))
-    print('dec_back_start()', speed)
-    return ""
 @socketio.on('dec_back_stop', namespace='/test')
 def dec_back_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(0))
-    print('dec_back_stop()')
-    return ""
 @socketio.on('dec_forward_start', namespace='/test')
 def dec_forward_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(speed))
-    print('dec_forward_start()', speed)
-    return ""
 @socketio.on('dec_forward_stop', namespace='/test')
 def dec_forward_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(0))
-    print('dec_forward_stop()')
-    return ""
 
 @socketio.on('ra_back_start', namespace='/test')
 def ra_back_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(-speed))
-    print('ra_back_start()', speed)
-    return ""
 @socketio.on('ra_back_stop', namespace='/test')
 def ra_back_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0))
-    print('ra_back_stop()')
-    return ""
 @socketio.on('ra_forward_start', namespace='/test')
 def ra_forward_start(speed):
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(speed))
-    print('ra_forward_start()', speed)
-    return ""
 @socketio.on('ra_forward_stop', namespace='/test')
 def ra_forward_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0))
-    print('ra_forward_stop()')
-    return ""
 
 def run():
     socketio.run(app, debug=False)

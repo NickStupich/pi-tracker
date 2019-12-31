@@ -65,6 +65,7 @@ class CameraAdjuster(threading.Thread):
         p.subscribe(messages.STATUS_CURRENT_TRACKING_POSITION)
         p.subscribe(messages.CMD_START_TRACKING)
         p.subscribe(messages.STATUS_STARTING_TRACKING_POSITION)
+        p.subscribe(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS)
 
         start_guiding_dir_1_start_time = None
         start_guiding_dir_1_start_location = None
@@ -74,6 +75,8 @@ class CameraAdjuster(threading.Thread):
         guiding_dir_orth_start_time = None
 
         failed_track_count = 0
+
+        dithering_offset = [0, 0]
         
         while not self.kill:
             message = p.get_message()
@@ -105,6 +108,10 @@ class CameraAdjuster(threading.Thread):
                 elif channel == messages.STATUS_STARTING_TRACKING_POSITION:
                     desired_location = redis_helpers.fromRedis(data)
                     print('adjuster got new desired location: ', desired_location)
+
+                elif channel == messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS:
+                    dithering_offset = redis_helpers.fromRedis(data)
+                    print('new dithering offset: ', dithering_offset)
 
                 elif channel == messages.STATUS_CURRENT_TRACKING_POSITION:
                     current_position = redis_helpers.fromRedis(data)
@@ -213,8 +220,11 @@ class CameraAdjuster(threading.Thread):
                             failed_track_count = 0
                             r.publish(messages.STATUS_FAILED_TRACKING_COUNT, redis_helpers.toRedis(failed_track_count))
 
-                            #do parallel guiding in all states
-                            shift = current_position - desired_location
+                            #do parallel guiding in all states. only dither once we're up and running
+                            if current_state == AdjusterStates.GUIDING:
+                                shift = current_position - (desired_location + dithering_offset)
+                            else:
+                                shift = current_position - desired_location
                             # print('shift: ', shift)
                             parallel_distance = np.dot(shift, guide_vector) / (np.linalg.norm(guide_vector)**2)
                         

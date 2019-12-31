@@ -1,6 +1,6 @@
 
-import camera_pi as camera
-# import camera_files as camera
+# import camera_pi as camera
+import camera_files as camera
 
 
 import single_point_tracking as tracking
@@ -10,6 +10,7 @@ import updates_listener
 import web_ui
 import image_preview    
 import camera_adjuster
+import dithering
 
 if __name__ == '__main__':
     cam = camera.Camera()
@@ -28,5 +29,8 @@ if __name__ == '__main__':
 
     motor_2 = motor_control_axis_2.MotorControl()
     motor_2.start()
+
+    ditherer = dithering.Ditherer()
+    ditherer.start()
 
     web_ui.run()

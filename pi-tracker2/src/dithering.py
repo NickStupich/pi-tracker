@@ -19,14 +19,17 @@ class Ditherer(threading.Thread):
         p = self.r.pubsub(ignore_subscribe_messages=True)
 
         self.t = 0
-        self.dithering_magnitude_pixels = 0
+        self.dithering_magnitude_pixels = 1
         self.dithering_interval_seconds = 30
+        self.dithering_enabled = False
         self.kill = False
 
         p.subscribe(**{messages.STOP_ALL : self.stop_all_handler,
         	messages.CMD_START_GUIDING : self.start_guiding_handler,
         	messages.CMD_SET_DITHERING_MAGNITUDE: self.set_dithering_magnitude_handler,
         	messages.CMD_SET_DITHERING_INTERVAL : self.set_dithering_interval_handler,
+        	messages.CMD_START_DITHERING : self.start_dithering_handler,
+        	messages.CMD_STOP_DITHERING : self.stop_dithering_handler,
         	})
 
         self.thread = p.run_in_thread(sleep_time = 0.1)
@@ -34,15 +37,20 @@ class Ditherer(threading.Thread):
         scale_constant_divider = 5
 
         while not self.kill:
-        	time.sleep(self.dithering_interval_seconds)
 
-        	self.t += 1 / (self.t + 1)
-        	dx = self.t * self.dithering_magnitude_pixels/scale_constant_divider * np.cos(self.t)
-        	dy = self.t * self.dithering_magnitude_pixels/scale_constant_divider * np.sin(self.t)
+        	if not self.dithering_enabled:
+        		time.sleep(0.5) #don't take too long to get started
+        	else:
+	        	self.t += 1 / (self.t + 1)
+	        	dx = self.t * self.dithering_magnitude_pixels/scale_constant_divider * np.cos(self.t)
+	        	dy = self.t * self.dithering_magnitude_pixels/scale_constant_divider * np.sin(self.t)
 
-        	dither_vector = np.array([dy, dx])
-        	print('dither vector: ', dither_vector)
-        	self.r.publish(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS, redis_helpers.toRedis(dither_vector))
+	        	dither_vector = np.array([dy, dx])
+	        	print('dither vector: ', dither_vector)
+	        	self.r.publish(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS, redis_helpers.toRedis(dither_vector))
+
+	        	#at end to reduce race condition when stopping
+	        	time.sleep(self.dithering_interval_seconds)
 
         self.thread.stop()
 
@@ -56,10 +64,21 @@ class Ditherer(threading.Thread):
     def set_dithering_magnitude_handler(self, message):
     	self.t = 0
     	self.dithering_magnitude_pixels = redis_helpers.fromRedis(message['data'])
+    	print('dithering magnitude: ', self.dithering_magnitude_pixels)
 
     def set_dithering_interval_handler(self, message):
     	self.t = 0
     	self.dithering_interval_seconds = redis_helpers.fromRedis(message['data'])
+    	print('dithering interval: ', self.dithering_interval_seconds)
+
+    def start_dithering_handler(self, message):
+    	self.t = 0
+    	self.dithering_enabled = True
+
+    def stop_dithering_handler(self, message):
+    	self.dithering_enabled = False
+    	self.r.publish(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS, redis_helpers.toRedis(np.array([0, 0])))
+
 
 def test_actor():
 	d = Ditherer()
