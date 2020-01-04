@@ -153,7 +153,7 @@ def ra_forward_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0))
 
 def run():
-    socketio.run(app, debug=False)
+    socketio.run(app, debug=False, host='0.0.0.0')
 
 if __name__ == "__main__":
     run()

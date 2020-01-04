@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import threading
 import time
@@ -81,6 +81,7 @@ class Ditherer(threading.Thread):
 
 
 def test_actor():
+	import matplotlib.pyplot as plt
 	d = Ditherer()
 	d.start()
 
@@ -113,6 +114,7 @@ def test_actor():
 
 def test_equation():
 
+	import matplotlib.pyplot as plt
 	xs = []
 	ys = []
 

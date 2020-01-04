@@ -7,7 +7,7 @@ import redis_helpers
 import redis
 import numpy as np
 
-if 0:
+if 1:
     from gpiozero import LED, PWMLED
 else:    
     class PWMLED(object):
