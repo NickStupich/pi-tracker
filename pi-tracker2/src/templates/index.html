@@ -44,6 +44,14 @@
 				updateAdjustmentChart(adjustmentRA, smoothAdjustmentRA, adjustmentDEC, smoothAdjustmentDEC);
 		    });
 
+		    socket.on("log_msg", function(msg) {
+		    	console.log("new log: ", msg);
+		    	$("#NewLogs").append(msg.value.replace('\n', '</p>'));
+		    });
+		    socket.on("error_msg", function(msg) {
+		    	$("#ErrorLogs").append(msg.value.replace('\n', '</p>'));
+		    });
+
 		    $("#startTrackingButton").change(function() {
 		    	var newValue = $(this).is(':checked');
 		    	if(newValue) {
@@ -127,15 +135,12 @@
 		    	socket.emit('set_dithering_interval', newValue);
 		    });
 
-
 		    $("#enableDitheringButton").change(function() {
 		    	var newValue = $(this).is(':checked');
 		    	if(newValue) {
 			    	socket.emit("enable_dithering");
-			    	console.log('enable dithering');
 			    } else {
 			    	socket.emit("disable_dithering");
-			    	console.log('disable dithering');
 			    }
 		    });
 
@@ -229,8 +234,8 @@
 		Parallel Tracking Error: <span id="STATUS_PARALLEL_ERROR"></span></br>
 	</div>
 
-	<div id="NewLogs" style="height:300px;width:400px;overflow:auto;">Logs</div>
-	<div id="ErrorLogs" style="height:300px;width:400px;overflow:auto;color:red">Errors</div>
+	<div>Logs<div id="NewLogs" style="height:300px;width:400px;overflow:auto;border:2px solid black"></div></div>
+	<div>Errors<div id="ErrorLogs" style="height:300px;width:400px;overflow:auto;color:red;border:2px solid red"></div></div>
   </div>
 
   <div style='margin-left:404px'>

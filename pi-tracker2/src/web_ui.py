@@ -18,17 +18,18 @@ log.setLevel(logging.ERROR)
 
 from wtforms import Form, StringField, TextField, validators, IntegerField, FloatField, BooleanField
 
-new_logs = ""
-error_logs = ""
-import sys
+app = Flask(__name__)
+# async_mode = "eventlet"
+# async_mode = "gevent"
+async_mode = "threading"
+socketio = SocketIO(app, async_mode=async_mode, ping_timeout=30, logger=False, engineio_logger=False)
 
+import sys
 def log_new_write(message):
-    global new_logs
-    new_logs += message  
+    socketio.emit("log_msg", {'value': message}, namespace='/test')
 
 def err_new_write(message):
-    global error_logs
-    error_logs += message
+    socketio.emit("error_msg", {'value': message}, namespace='/test')
 
 class Logger(object):
     def __init__(self, original_stream, new_write):
@@ -44,12 +45,6 @@ class Logger(object):
 
 sys.stdout = Logger(sys.stdout, log_new_write)
 sys.stderr = Logger(sys.stderr, err_new_write)
-
-app = Flask(__name__)
-# async_mode = "eventlet"
-# async_mode = "gevent"
-async_mode = "threading"
-socketio = SocketIO(app, async_mode=async_mode, ping_timeout=30, logger=False, engineio_logger=False)
 
 r = redis.StrictRedis(host='localhost', port=6379) 
 

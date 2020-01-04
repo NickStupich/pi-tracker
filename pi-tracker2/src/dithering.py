@@ -46,7 +46,7 @@ class Ditherer(threading.Thread):
 	        	dy = self.t * self.dithering_magnitude_pixels/scale_constant_divider * np.sin(self.t)
 
 	        	dither_vector = np.array([dy, dx])
-	        	print('dither vector: ', dither_vector)
+	        	# print('dither vector: ', dither_vector)
 	        	self.r.publish(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS, redis_helpers.toRedis(dither_vector))
 
 	        	#at end to reduce race condition when stopping

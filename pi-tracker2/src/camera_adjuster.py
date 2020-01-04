@@ -111,7 +111,7 @@ class CameraAdjuster(threading.Thread):
 
                 elif channel == messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS:
                     dithering_offset = redis_helpers.fromRedis(data)
-                    print('new dithering offset: ', dithering_offset)
+                    # print('new dithering offset: ', dithering_offset)
 
                 elif channel == messages.STATUS_CURRENT_TRACKING_POSITION:
                     current_position = redis_helpers.fromRedis(data)
