@@ -6,10 +6,12 @@ from dspin_constants import *
 
 from gpiozero import LED, Button
 
-bus = 0
+bus = 1
+#bus=0
 cs_pin = 0
 
-slave_select_pin = 25
+#slave_select_pin = 25
+slave_select_pin=12
 reset_pin = 3
 busy_pin = 2
 
@@ -116,10 +118,10 @@ def connect_l6470():
 	time.sleep(0.1)
 	reset_gpio.on()
 	time.sleep(0.1)
-	
+
 	spi.open(bus, cs_pin)
 	spi.max_speed_hz = 10000
-	spi.mode = 3
+	spi.mode = 0
 	spi.lsbfirst = False
 	#spi.no_cs = True
 	#spi.loop = False
@@ -182,8 +184,8 @@ if __name__ == "__main__":
 	steps_per_second = steps_per_rotation * gear_ratio / seconds_per_rotation 
 	print('steps per second: ', steps_per_second)
 	
-	dspin_Run(FWD, dspin_SpdCalc(100*steps_per_second))
-	time.sleep(10)
+	dspin_Run(FWD, dspin_SpdCalc(1000*steps_per_second))
+	time.sleep(2)
 	
 	disconnect_l6470()
 
