@@ -1,0 +1,11 @@
+
+
+
+
+motor controls:
+	new git branch
+	genericize between l6470 and pwm
+	work with negative values
+	buttons for adjustment into web UI
+
+	l6470 doesn't stop when speed == 0?
