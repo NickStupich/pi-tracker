@@ -22,7 +22,7 @@ class Dspin_motor(object):
 			time.sleep(0.1)
 			
 
-	def __init__(self, slave_select_pin, bus, cs_pin, reset_pin):
+	def __init__(self, bus, cs_pin, slave_select_pin, reset_pin):
 		Dspin_motor.init_toggle_reset_pin(reset_pin)
 
 		self.slave_select_gpio = LED(slave_select_pin)
@@ -109,6 +109,7 @@ class Dspin_motor(object):
 
 	def dspin_Run(self, dir, speed):
 		speed = int(speed)
+                print('speed: ', speed)
 		self.dspin_xfer(dSPIN_RUN | dir)
 		if speed > 0xFFFFF: speed = 0xFFFFF
 
@@ -121,9 +122,9 @@ class Dspin_motor(object):
 
 	def dspin_SpdCalc(self, stepsPerSec):
 		result = stepsPerSec * 67.106
-		if result > 0x3FFF:
-			result = 0x3FFF
-		#print('speed result: ', int(result))
+		#if result > 0x3FFF:
+		#	result = 0x3FFF
+		print('speed result: ', int(result))
 		return int(result)
 
 	def connect_l6470(self):
@@ -138,13 +139,14 @@ class Dspin_motor(object):
 		print('status: ', hex(status))
 		
 		self.dspin_SetParam(dSPIN_STEP_MODE, 
-				(0xFF - dSPIN_SYNC_EN) | dSPIN_STEP_SEL_1_128 | dSPIN_SYNC_SEL_64)
+                           (0xFF - dSPIN_SYNC_EN) | dSPIN_STEP_SEL_1_128 | dSPIN_SYNC_SEL_64)
 		
 		status = self.dspin_GetStatus()
 		print('status: ', hex(status))
 		
 		self.dspin_SetParam(dSPIN_MIN_SPEED, 1)
-		print('min speed: ', self.dspin_GetParam(dSPIN_MIN_SPEED))
+		#self.dspin_SetParam(dSPIN_MAX_SPEED, 2000)
+                print('min speed: ', self.dspin_GetParam(dSPIN_MIN_SPEED))
 		print('max speed: ', self.dspin_GetParam(dSPIN_MAX_SPEED))
 		#max speed?
 		
@@ -190,16 +192,17 @@ if __name__ == "__main__":
 
 	motor1 = Dspin_motor(0, 0, 25, reset_pin)
 	motor2 = Dspin_motor(1, 0, 12, reset_pin)
+        speed = 2000
+	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(speed))
+	time.sleep(2)
+        motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
+	time.sleep(2)
+        motor1.dspin_SoftStop()
+        motor2.dspin_Run(FWD, motor2.dspin_SpdCalc(speed))
+	time.sleep(2)
+        motor2.dspin_Run(REV, motor2.dspin_SpdCalc(speed))
 
-	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(2000))
-	motor2.dspin_Run(FWD, motor1.dspin_SpdCalc(2000))
-
-	time.sleep(5)
-
-	motor1.dspin_Run(REV, motor1.dspin_SpdCalc(1000))
-	motor2.dspin_Run(REV, motor1.dspin_SpdCalc(1000))
-
-	time.sleep(5)
+	time.sleep(2)
 
 	motor1.disconnect_l6470()
 	motor2.disconnect_l6470()
