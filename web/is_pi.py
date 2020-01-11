@@ -5,4 +5,4 @@ import os
 if not 'uname' in dir(os): 
 	is_pi = False
 else:
-	is_pi = os.uname().nodename == 'raspberrypi'
+	is_pi = 'raspberrypi' in os.uname()

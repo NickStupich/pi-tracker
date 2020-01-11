@@ -1,10 +1,24 @@
-import spidev
 import time
 import math
 
 from dspin_constants import *
 
-from gpiozero import LED, Button
+import is_pi
+
+if is_pi.is_pi:
+	from gpiozero import LED
+	from spidev import SpiDev
+else:
+    class LED(object):
+        def __init__(*args): pass
+        def on(self): pass
+        def off(self): pass
+
+    class SpiDev(object):
+    	def __init__(*args):pass
+    	def open(self, bus, cs_pin):pass
+    	def xfer(self, data): return [0]
+    	def close(self):pass
 
 class Dspin_motor(object):
 		
@@ -26,7 +40,7 @@ class Dspin_motor(object):
 		Dspin_motor.init_toggle_reset_pin(reset_pin)
 
 		self.slave_select_gpio = LED(slave_select_pin)
-		self.spi = spidev.SpiDev()
+		self.spi = SpiDev()
 
 		self.slave_select_gpio.on()
 
@@ -109,7 +123,7 @@ class Dspin_motor(object):
 
 	def dspin_Run(self, dir, speed):
 		speed = int(speed)
-                print('speed: ', speed)
+		# print('speed: ', speed)
 		self.dspin_xfer(dSPIN_RUN | dir)
 		if speed > 0xFFFFF: speed = 0xFFFFF
 
@@ -124,7 +138,7 @@ class Dspin_motor(object):
 		result = stepsPerSec * 67.106
 		#if result > 0x3FFF:
 		#	result = 0x3FFF
-		print('speed result: ', int(result))
+		# print('speed result: ', int(result))
 		return int(result)
 
 	def connect_l6470(self):
@@ -146,7 +160,7 @@ class Dspin_motor(object):
 		
 		self.dspin_SetParam(dSPIN_MIN_SPEED, 1)
 		#self.dspin_SetParam(dSPIN_MAX_SPEED, 2000)
-                print('min speed: ', self.dspin_GetParam(dSPIN_MIN_SPEED))
+		print('min speed: ', self.dspin_GetParam(dSPIN_MIN_SPEED))
 		print('max speed: ', self.dspin_GetParam(dSPIN_MAX_SPEED))
 		#max speed?
 		
@@ -192,34 +206,17 @@ if __name__ == "__main__":
 
 	motor1 = Dspin_motor(0, 0, 25, reset_pin)
 	motor2 = Dspin_motor(1, 0, 12, reset_pin)
-        speed = 2000
+	speed = 2000
 	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(speed))
 	time.sleep(2)
-        motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
+	motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
 	time.sleep(2)
-        motor1.dspin_SoftStop()
-        motor2.dspin_Run(FWD, motor2.dspin_SpdCalc(speed))
+	motor1.dspin_SoftStop()
+	motor2.dspin_Run(FWD, motor2.dspin_SpdCalc(speed))
 	time.sleep(2)
-        motor2.dspin_Run(REV, motor2.dspin_SpdCalc(speed))
+	motor2.dspin_Run(REV, motor2.dspin_SpdCalc(speed))
 
 	time.sleep(2)
 
 	motor1.disconnect_l6470()
 	motor2.disconnect_l6470()
-
-
-	# connect_l6470()
-		
-	# seconds_per_rotation = (24.*60.*60.)
-	# gear_ratio = 128.
-	# steps_per_rotation = 400.
-	# steps_per_second = steps_per_rotation * gear_ratio / seconds_per_rotation 
-	# print('steps per second: ', steps_per_second)
-	
-	# dspin_Run(FWD, dspin_SpdCalc(1000*steps_per_second))
-	# time.sleep(2)
-	
-	# disconnect_l6470()
-
-
-
