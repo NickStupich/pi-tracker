@@ -1,5 +1,4 @@
 *.pyc
 web/images/
-is_pi.py
 *.txt
 *.rdb
