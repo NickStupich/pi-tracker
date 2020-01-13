@@ -205,7 +205,7 @@ if __name__ == "__main__":
 	reset_pin = 3
 
 	motor1 = Dspin_motor(0, 0, 25, reset_pin)
-	motor2 = Dspin_motor(1, 0, 12, reset_pin)
+	motor2 = Dspin_motor(1, 0, 26, reset_pin)
 	speed = 2000
 	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(speed))
 	time.sleep(2)
