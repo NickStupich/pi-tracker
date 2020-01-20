@@ -183,7 +183,7 @@
 	<div>
 		<span>Tracking </span>
 		<label class="switch" >
-		  <input type="checkbox" id="startTrackingButton">
+		  <input type="checkbox" id="startTrackingButton" {{ is_tracking }}>
 		  <span class="slider round"></span>
 		</label>
 	</div>
@@ -191,7 +191,7 @@
 	<div>
 		<span>Movement </span>
 		<label class="switch" >
-		  <input type="checkbox" id="enableMovementButton" checked=true>
+		  <input type="checkbox" id="enableMovementButton" {{ is_moving }}>
 		  <span class="slider round"></span>
 		</label>
 	</div>
@@ -199,7 +199,7 @@
 	<div>
 		<span>Guiding </span>
 		<label class="switch" >
-		  <input type="checkbox" id="enableGuidingButton">
+		  <input type="checkbox" id="enableGuidingButton" {{ is_guiding }}>
 		  <span class="slider round"></span>
 		</label>
 	</div>
@@ -208,7 +208,7 @@
 	<div>
 		<span>Dithering </span>
 		<label class="switch" >
-		  <input type="checkbox" id="enableDitheringButton">
+		  <input type="checkbox" id="enableDitheringButton" {{ is_dithering }}>
 		  <span class="slider round"></span>
 		</label>
 

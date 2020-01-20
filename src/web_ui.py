@@ -11,7 +11,7 @@ import messages
 import time
 import redis_helpers
 import redis
-
+import functools
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -51,9 +51,51 @@ r = redis.StrictRedis(host='localhost', port=6379)
 import updates_listener
 updates = updates_listener.UpdatesListener(socketio)
 
+def get_current_status():
+    p = r.pubsub(ignore_subscribe_messages=True)   
+
+    status = {messages.STATUS_TRACKING_STATUS : None,
+        messages.STATUS_MOVEMENT_STATUS : None,
+        messages.STATUS_GUIDING_STATUS : None,
+        messages.STATUS_DITHERING_STATUS : None
+        }
+
+    for key in status.keys():
+        p.subscribe(key)
+
+    r.publish(messages.STATUS_GET_ALL_STATUS, "")
+
+    while 1:
+        message = p.get_message()
+        if message:
+            channel = message['channel'].decode('ASCII')
+            data = redis_helpers.fromRedis(message['data'])
+            if channel in status:
+                status[channel] = data
+
+                finished = functools.reduce(lambda a, b: a and b, map(lambda x: x is not None, status.values()))
+                if finished: 
+                    break
+        time.sleep(0.1)
+
+    return status
+
 @app.route('/')
 def index():
-    return render_template('index.html', async_mode=socketio.async_mode)
+
+    status = get_current_status()
+
+    def to_bool(x):
+        return  'checked="true"' if x else ""
+
+    result = render_template('index.html', async_mode=socketio.async_mode,
+        is_tracking = to_bool(status[messages.STATUS_TRACKING_STATUS]), 
+        is_moving = to_bool(status[messages.STATUS_MOVEMENT_STATUS]), 
+        is_guiding=to_bool(status[messages.STATUS_GUIDING_STATUS]), 
+        is_dithering = to_bool(status[messages.STATUS_DITHERING_STATUS]),
+        )
+    
+    return result
 
 @socketio.on('set_shutter_speed', namespace='/test')
 def setShutterSpeed(value):

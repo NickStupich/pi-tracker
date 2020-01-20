@@ -159,6 +159,7 @@ class SinglePointTracking(threading.Thread):
         p.subscribe(messages.CMD_START_TRACKING)
         p.subscribe(messages.CMD_STOP_TRACKING)
         p.subscribe(messages.NEW_IMAGE_FRAME)
+        p.subscribe(messages.STATUS_GET_ALL_STATUS)
 
         while 1:
             message = p.get_message()
@@ -168,6 +169,8 @@ class SinglePointTracking(threading.Thread):
 
                 if channel == messages.STOP_ALL:
                     break
+                elif channel == messages.STATUS_GET_ALL_STATUS:
+                    self.r.publish(messages.STATUS_TRACKING_STATUS, redis_helpers.toRedis(self.is_tracking))
                 elif channel == messages.CMD_START_TRACKING:
                     self.last_coords = None
                     self.is_tracking = True

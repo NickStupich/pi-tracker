@@ -30,6 +30,7 @@ class Ditherer(threading.Thread):
         	messages.CMD_SET_DITHERING_INTERVAL : self.set_dithering_interval_handler,
         	messages.CMD_START_DITHERING : self.start_dithering_handler,
         	messages.CMD_STOP_DITHERING : self.stop_dithering_handler,
+        	messages.STATUS_GET_ALL_STATUS : self.get_status_handler,
         	})
 
         self.thread = p.run_in_thread(sleep_time = 0.1)
@@ -53,6 +54,9 @@ class Ditherer(threading.Thread):
 	        	time.sleep(self.dithering_interval_seconds)
 
         self.thread.stop()
+
+    def get_status_handler(self, message):
+    	self.r.publish(messages.STATUS_DITHERING_STATUS, redis_helpers.toRedis(self.dithering_enabled))
 
     def stop_all_handler(self, message):
     	self.kill = True

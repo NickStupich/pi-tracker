@@ -66,6 +66,7 @@ class CameraAdjuster(threading.Thread):
         p.subscribe(messages.CMD_START_TRACKING)
         p.subscribe(messages.STATUS_STARTING_TRACKING_POSITION)
         p.subscribe(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS)
+        p.subscribe(messages.STATUS_GET_ALL_STATUS)
 
         start_guiding_dir_1_start_time = None
         start_guiding_dir_1_start_location = None
@@ -112,6 +113,9 @@ class CameraAdjuster(threading.Thread):
                 elif channel == messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS:
                     dithering_offset = redis_helpers.fromRedis(data)
                     # print('new dithering offset: ', dithering_offset)
+
+                elif channel == messages.STATUS_GET_ALL_STATUS:
+                    r.publish(messages.STATUS_GUIDING_STATUS, redis_helpers.toRedis(current_state != AdjusterStates.NOT_GUIDING))
 
                 elif channel == messages.STATUS_CURRENT_TRACKING_POSITION:
                     current_position = redis_helpers.fromRedis(data)
