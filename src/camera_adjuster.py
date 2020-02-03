@@ -11,8 +11,8 @@ import redis_helpers
 
 #TODO: longer after testing?
 VECTOR_ESTIMATION_TIME_SECONDS = 10
-ADJUSTMENT_TARGET_SECONDS = 10 #how 'aggressive' to pull towards ideal spot
-ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS = 30
+ADJUSTMENT_TARGET_SECONDS = 3 #how 'aggressive' to pull towards ideal spot
+ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS = 10
 MAX_ADJUSTMENT = 1
 GUIDE_CAM_ARC_SECONDS_PER_PIXEL = 4.1 #??
 
