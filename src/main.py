@@ -28,7 +28,8 @@ if __name__ == '__main__':
     motor_ra = motor_control.MotorControl(bus=1, cs_pin = 0, slave_pin=26, reset_pin = 3, 
             speed_adjustment_msg = messages.CMD_SET_SPEED_ADJUSTMENT_RA,
             base_steps_per_second = base_steps_per_second_ra,
-            default_speed = 1)    
+            default_speed = 1,
+            position_broadcast_msg = messages.STATUS_RA_POSITION)    
     motor_ra.start()
 
     preview = image_preview.ImagePreview()
@@ -43,7 +44,8 @@ if __name__ == '__main__':
     motor_dec = motor_control.MotorControl(bus=0, cs_pin = 0, slave_pin=25, reset_pin = 3, 
             speed_adjustment_msg = messages.CMD_SET_SPEED_ADJUSTMENT_DEC,
             base_steps_per_second = base_steps_per_second_dec,
-            default_speed = 0)    
+            default_speed = 0,
+            position_broadcast_msg = messages.STATUS_DEC_POSITION)    
     motor_dec.start()
 
     ditherer = dithering.Ditherer()

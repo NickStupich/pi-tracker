@@ -93,6 +93,8 @@ class Dspin_motor(object):
 			return self.dspin_param(value, 10)
 		elif param == dSPIN_OCD_TH:
 			return self.dspin_xfer(value & 0x0F)
+		elif param == dSPIN_ABS_POS:
+			return self.dspin_param(value, 22)
 
 		else:
 			raise Exception('not implemented: ' + str(param))
@@ -140,6 +142,9 @@ class Dspin_motor(object):
 		#	result = 0x3FFF
 		# print('speed result: ', int(result))
 		return int(result)
+
+	def dspin_GetPositionSteps(self):
+		return self.dspin_GetParam(dSPIN_ABS_POS)
 
 	def connect_l6470(self):
 		

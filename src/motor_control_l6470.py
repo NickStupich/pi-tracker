@@ -16,7 +16,8 @@ class MotorControl(threading.Thread):
                 bus, cs_pin, slave_pin, reset_pin, 
                 speed_adjustment_msg,
                 base_steps_per_second,
-                default_speed #1 for ra, 0 for dec
+                default_speed,
+                position_broadcast_msg #1 for ra, 0 for dec
                 ):
         threading.Thread.__init__(self)
 
@@ -33,6 +34,8 @@ class MotorControl(threading.Thread):
                 messages.STATUS_GET_ALL_STATUS : self.get_status_handler,
                 speed_adjustment_msg:self.set_adjustment_factor_handler,
             })
+
+        self.position_broadcast_msg = position_broadcast_msg
 
         self.thread = self.p.run_in_thread(sleep_time = 0.01)
 
@@ -61,7 +64,9 @@ class MotorControl(threading.Thread):
         self.dspin.connect_l6470()
 
         #print('baseline steps per second: ', self.base_steps_per_second)
-        
+        last_position_steps = 0
+        position_steps_offset = 0
+
         while not self.kill:
             if MotorControl.movement_enabled:
                 
@@ -81,6 +86,17 @@ class MotorControl(threading.Thread):
                 self.dspin.dspin_SoftStop()
 
             time.sleep(0.5)
+
+            abs_position_steps = self.dspin.dspin_GetPositionSteps()
+            position_steps = position_steps_offset + abs_position_steps
+
+            position_total_seconds = position_steps / self.base_steps_per_second
+            position_seconds = position_total_seconds % 60
+            position_minutes = (position_total_seconds / 60) % 60
+            position_degrees = (position_total_seconds / 3600)
+
+            self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis([position_degrees, position_minutes, position_seconds]))
+            
 
         self.dspin.disconnect_l6470()
         self.thread.stop()

@@ -20,7 +20,8 @@
 				'STATUS_PARALLEL_ERROR',
 				'STATUS_ORTHOGONAL_ERROR',
 				'STATUS_DRIFT_X',
-				'STATUS_DRIFT_Y']
+				'STATUS_DRIFT_Y',
+				'STATUS_RA_POSITION']
 
 		    for (const key of simple_update_keys){
 		    	socket.on(key, function(msg){
@@ -232,6 +233,7 @@
 		Current Tracking Position: <span id="STATUS_CURRENT_TRACKING_POSITION"></span></br>
 		Orthogonal Error: <span id="STATUS_ORTHOGONAL_ERROR"></span></br>
 		Parallel Tracking Error: <span id="STATUS_PARALLEL_ERROR"></span></br>
+		Current RA Position: <span id="STATUS_RA_POSITION"></span></br>
 	</div>
 
 	<div>Logs<div id="NewLogs" style="height:300px;width:400px;overflow:auto;border:2px solid black"></div></div>

@@ -35,6 +35,7 @@ class UpdatesListener(object):
         self.add_simple_parameter(messages.STATUS_FAILED_TRACKING_COUNT)
         
         self.add_json_parameter(messages.STATUS_GUIDING_STATUS)
+        self.add_json_parameter(messages.STATUS_RA_POSITION)
 
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler,
                             messages.STATUS_GET_ALL_STATUS : self.get_all_status})
