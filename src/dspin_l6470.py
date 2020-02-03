@@ -46,7 +46,7 @@ class Dspin_motor(object):
 
 		self.spi.open(bus, cs_pin)
 		self.spi.max_speed_hz = 10000
-		self.spi.mode = 0
+		self.spi.mode = 3
 		self.spi.lsbfirst = False
 		#spi.no_cs = True
 		#spi.loop = False
@@ -144,7 +144,7 @@ class Dspin_motor(object):
 		return int(result)
 
 	def dspin_GetPositionSteps(self):
-		return self.dspin_GetParam(dSPIN_ABS_POS)
+		return self.dspin_GetParam(dSPIN_ABS_POS) / 128
 
 	def connect_l6470(self):
 		
@@ -200,21 +200,20 @@ class Dspin_motor(object):
 if __name__ == "__main__":
 		
 
-	bus = 1
-	#bus=0
+	#bus = 1
+	bus=0
 	cs_pin = 0
 
-	#slave_select_pin = 25
-	slave_select_pin=12
+	slave_select_pin = 25
+	#slave_select_pin=12
 	# busy_pin = 2
 	reset_pin = 3
 
 	motor1 = Dspin_motor(0, 0, 25, reset_pin)
-	motor2 = Dspin_motor(1, 0, 26, reset_pin)
+	motor2 = Dspin_motor(0, 0, 26, reset_pin)
 	speed = 2000
 	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(speed))
-	time.sleep(2)
-	motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
+	time.sleep(2); print(motor1.dspin_GetPositionSteps()); motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
 	time.sleep(2)
 	motor1.dspin_SoftStop()
 	motor2.dspin_Run(FWD, motor2.dspin_SpdCalc(speed))

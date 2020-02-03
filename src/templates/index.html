@@ -21,11 +21,13 @@
 				'STATUS_ORTHOGONAL_ERROR',
 				'STATUS_DRIFT_X',
 				'STATUS_DRIFT_Y',
-				'STATUS_RA_POSITION']
+				'STATUS_RA_POSITION',
+		    		'STATUS_DEC_POSITION']
 
 		    for (const key of simple_update_keys){
 		    	socket.on(key, function(msg){
-			    	$("#" + key).text(msg.value);
+				//console.log(key, msg.value);
+				$("#" + key).text(msg.value);
 		    	});
 		    }
 
@@ -234,6 +236,7 @@
 		Orthogonal Error: <span id="STATUS_ORTHOGONAL_ERROR"></span></br>
 		Parallel Tracking Error: <span id="STATUS_PARALLEL_ERROR"></span></br>
 		Current RA Position: <span id="STATUS_RA_POSITION"></span></br>
+		Current DEC Position: <span id="STATUS_DEC_POSITION"></span></br>
 	</div>
 
 	<div>Logs<div id="NewLogs" style="height:300px;width:400px;overflow:auto;border:2px solid black"></div></div>

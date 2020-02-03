@@ -35,7 +35,8 @@ class UpdatesListener(object):
         self.add_simple_parameter(messages.STATUS_FAILED_TRACKING_COUNT)
         
         self.add_json_parameter(messages.STATUS_GUIDING_STATUS)
-        self.add_json_parameter(messages.STATUS_RA_POSITION)
+        self.add_simple_parameter(messages.STATUS_RA_POSITION)
+        self.add_simple_parameter(messages.STATUS_DEC_POSITION)
 
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler,
                             messages.STATUS_GET_ALL_STATUS : self.get_all_status})
@@ -59,6 +60,7 @@ class UpdatesListener(object):
     def updateJsonParameter(self, message):
         channel = message['channel'].decode('ASCII')
         raw_data = redis_helpers.fromRedis(message['data'])
+        #print(channel, raw_data)
         self.socketio.emit(channel, {'value': raw_data}, namespace='/test')
         self.current_values[str(channel)] = raw_data
 

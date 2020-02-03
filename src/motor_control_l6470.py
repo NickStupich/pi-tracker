@@ -88,14 +88,17 @@ class MotorControl(threading.Thread):
             time.sleep(0.5)
 
             abs_position_steps = self.dspin.dspin_GetPositionSteps()
+            #print(abs_position_steps)
             position_steps = position_steps_offset + abs_position_steps
 
             position_total_seconds = position_steps / self.base_steps_per_second
-            position_seconds = position_total_seconds % 60
-            position_minutes = (position_total_seconds / 60) % 60
-            position_degrees = (position_total_seconds / 3600)
-
-            self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis([position_degrees, position_minutes, position_seconds]))
+            position_seconds = int(position_total_seconds % 60)
+            position_minutes = int((position_total_seconds / 60) % 60)
+            position_hours = int((position_total_seconds / 3600))
+            
+            #broadcast_position_str = "%2dh%2dm%2ds" % (position_hours, position_minutes, position_seconds)
+            broadcast_position_str = str(abs_position_steps)
+            self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis(broadcast_position_str))
             
 
         self.dspin.disconnect_l6470()
