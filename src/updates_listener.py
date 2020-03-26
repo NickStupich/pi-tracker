@@ -35,8 +35,12 @@ class UpdatesListener(object):
         self.add_simple_parameter(messages.STATUS_FAILED_TRACKING_COUNT)
         
         self.add_json_parameter(messages.STATUS_GUIDING_STATUS)
-        self.add_simple_parameter(messages.STATUS_RA_POSITION)
-        self.add_simple_parameter(messages.STATUS_DEC_POSITION)
+        
+        #self.add_simple_parameter(messages.STATUS_RA_POSITION)
+        #self.add_simple_parameter(messages.STATUS_DEC_POSITION)
+        self.p.subscribe(**{messages.STATUS_RA_POSITION : self.updatePosition})
+        self.p.subscribe(**{messages.STATUS_DEC_POSITION : self.updatePosition})
+
 
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler,
                             messages.STATUS_GET_ALL_STATUS : self.get_all_status})
@@ -63,6 +67,13 @@ class UpdatesListener(object):
         #print(channel, raw_data)
         self.socketio.emit(channel, {'value': raw_data}, namespace='/test')
         self.current_values[str(channel)] = raw_data
+
+    def updatePosition(self, message):
+        channel = message['channel'].decode('ASCII')
+        position = redis_helpers.fromRedis(message['data'])
+        position_str = "%02dh%02dm%02ds" % (position[0], position[1], position[2])
+        self.socketio.emit(channel, {'value' : position_str}, namespace='/test')
+        self.current_values[str(channel)] = position_str
 
     def stop_all_handler(self):
         self.thread.stop()

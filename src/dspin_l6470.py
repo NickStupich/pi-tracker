@@ -1,5 +1,6 @@
 import time
 import math
+import threading
 
 from dspin_constants import *
 
@@ -21,8 +22,9 @@ else:
     	def close(self):pass
 
 class Dspin_motor(object):
-		
+	
 	__has_toggled_reset_pin = False
+	__spi_lock = None
 	@classmethod
 	def init_toggle_reset_pin(cls, reset_pin):
 		if not cls.__has_toggled_reset_pin:
@@ -34,7 +36,8 @@ class Dspin_motor(object):
 			time.sleep(0.1)
 			cls.reset_gpio.on()
 			time.sleep(0.1)
-			
+			Dspin_motor.__spi_lock = threading.Lock()
+
 
 	def __init__(self, bus, cs_pin, slave_select_pin, reset_pin):
 		Dspin_motor.init_toggle_reset_pin(reset_pin)
@@ -117,24 +120,30 @@ class Dspin_motor(object):
 		return result & mask
 			
 	def dspin_GetStatus(self):
+		Dspin_motor.__spi_lock.acquire()
 		temp = 0
 		self.dspin_xfer(dSPIN_GET_STATUS)
 		temp = self.dspin_xfer(0) << 8
 		temp |= self.dspin_xfer(0)
+		Dspin_motor.__spi_lock.release()
 		return temp
 
 	def dspin_Run(self, dir, speed):
 		speed = int(speed)
 		# print('speed: ', speed)
+		Dspin_motor.__spi_lock.acquire()
 		self.dspin_xfer(dSPIN_RUN | dir)
 		if speed > 0xFFFFF: speed = 0xFFFFF
 
 		self.dspin_xfer(speed >> 16)
 		self.dspin_xfer(speed >> 8)
 		self.dspin_xfer(speed)
-			
+		Dspin_motor.__spi_lock.release()
+
 	def dspin_SoftStop(self):
+		Dspin_motor.__spi_lock.acquire()
 		self.dspin_xfer(dSPIN_SOFT_STOP)
+		Dspin_motor.__spi_lock.release()
 
 	def dspin_SpdCalc(self, stepsPerSec):
 		result = stepsPerSec * 67.106
@@ -144,7 +153,10 @@ class Dspin_motor(object):
 		return int(result)
 
 	def dspin_GetPositionSteps(self):
-		return self.dspin_GetParam(dSPIN_ABS_POS) / 128
+		Dspin_motor.__spi_lock.acquire()
+		result = self.dspin_GetParam(dSPIN_ABS_POS) / 16
+		Dspin_motor.__spi_lock.release()
+		return result
 
 	def connect_l6470(self):
 		
