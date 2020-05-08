@@ -65,7 +65,10 @@ class MotorControl(threading.Thread):
 
         #print('baseline steps per second: ', self.base_steps_per_second)
         last_position_steps = 0
-        position_steps_offset = 0
+        #position_steps_offset = 0
+        last_position_steps = self.dspin.dspin_GetPositionSteps()
+
+        start_time = None
 
         while not self.kill:
             if MotorControl.movement_enabled:
@@ -87,12 +90,19 @@ class MotorControl(threading.Thread):
 
             time.sleep(0.5)
 
-            """
+            
             abs_position_steps = self.dspin.dspin_GetPositionSteps()
+            #if start_time is None: start_time = datetime.now()
+            #else: print(abs_position_steps / (self.base_steps_per_second * (datetime.now() - start_time).total_seconds()))
             #print(abs_position_steps)
-            position_steps = position_steps_offset + abs_position_steps
+            position_steps = abs_position_steps - last_position_steps
+            last_position_steps = abs_position_steps
+            #if last_position_steps
+            #print(position_steps)
 
             position_total_seconds = position_steps / self.base_steps_per_second
+            position_total_degrees = position_total_seconds * 360 / (24*60*60)
+
             position_seconds = int(position_total_seconds % 60)
             position_minutes = int((position_total_seconds / 60) % 60)
             position_hours = int((position_total_seconds / 3600))
@@ -100,8 +110,8 @@ class MotorControl(threading.Thread):
             #broadcast_position_str = "%2dh%2dm%2ds" % (position_hours, position_minutes, position_seconds)
             #broadcast_position_str = str(abs_position_steps)
             #self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis(broadcast_position_str))
-            self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis([position_hours, position_minutes, position_seconds]))
-            """
+            #self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis([position_hours, position_minutes, position_seconds]))
+            self.r.publish(self.position_broadcast_msg, redis_helpers.toRedis(position_total_degrees))
 
         self.dspin.disconnect_l6470()
         self.thread.stop()

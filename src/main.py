@@ -13,6 +13,7 @@ import image_preview
 import camera_adjuster
 import dithering
 import messages
+import coordinates_calibration
 
 if __name__ == '__main__':
     cam = camera.Camera()
@@ -29,7 +30,7 @@ if __name__ == '__main__':
             speed_adjustment_msg = messages.CMD_SET_SPEED_ADJUSTMENT_RA,
             base_steps_per_second = base_steps_per_second_ra,
             default_speed = 1,
-            position_broadcast_msg = messages.STATUS_RA_POSITION)    
+            position_broadcast_msg = messages.STATUS_HA_RELATIVE_POSITION)    
     motor_ra.start()
     
     preview = image_preview.ImagePreview()
@@ -45,10 +46,13 @@ if __name__ == '__main__':
             speed_adjustment_msg = messages.CMD_SET_SPEED_ADJUSTMENT_DEC,
             base_steps_per_second = base_steps_per_second_dec,
             default_speed = 0,
-            position_broadcast_msg = messages.STATUS_DEC_POSITION)    
+            position_broadcast_msg = messages.STATUS_DEC_RELATIVE_POSITION)    
     motor_dec.start()
     
     ditherer = dithering.Ditherer()
     ditherer.start()
+
+    coordinates_cal = coordinates_calibration.CoordinatesCalibration()
+    #coordinates_cal.start()
 
     web_ui.run()

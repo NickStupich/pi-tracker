@@ -21,6 +21,12 @@ else:
     	def xfer(self, data): return [0]
     	def close(self):pass
 
+def twos_comp(val, bits):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val 
+
 class Dspin_motor(object):
 	
 	__has_toggled_reset_pin = False
@@ -153,10 +159,15 @@ class Dspin_motor(object):
 		return int(result)
 
 	def dspin_GetPositionSteps(self):
-		Dspin_motor.__spi_lock.acquire()
-		result = self.dspin_GetParam(dSPIN_ABS_POS) / 16
-		Dspin_motor.__spi_lock.release()
-		return result
+                Dspin_motor.__spi_lock.acquire()
+                result = self.dspin_GetParam(dSPIN_ABS_POS)
+                result = twos_comp(result, 22)
+                Dspin_motor.__spi_lock.release()
+                
+                #result &= 0xFF80
+                result /= 16
+
+                return result
 
 	def connect_l6470(self):
 		
