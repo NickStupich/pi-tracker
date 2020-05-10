@@ -149,7 +149,7 @@
 		    });
 
 		    $("#goto_button").click(function() {
-		    	socket.emit("goto_position", $("#gotoRAH"), $("#gotoRAM"), $("#gotoRAS"), $("#gotoDecD"), $("#gotoDecM"), $("#gotoDecS"))
+		    	socket.emit("goto_position", $("#gotoRAH").val(), $("#gotoRAM").val(), $("#gotoRAS").val(), $("#gotoDecD").val(), $("#gotoDecM").val(), $("#gotoDecS").val())
 		    })
 
 

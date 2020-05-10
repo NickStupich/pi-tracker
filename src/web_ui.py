@@ -107,8 +107,13 @@ def setVisualGain(value):
 
 @socketio.on('goto_position', namespace='/test')
 def goto_position(ra_h, ra_m, ra_s, dec_d, dec_m, dec_s):
+    def pos_to_num(pos_str):
+        if len(pos_str.strip()) > 0:
+            return float(pos_str)
+        else:
+            return 0
     print('goto_position', ra_h, ra_m, ra_s, dec_d, dec_m, dec_s)
-    r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis(int(ra_h), int(ra_m), float(ra_s), int(dec_d), int(dec_m), float(dec_s)))
+    r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis((pos_to_num(ra_h), pos_to_num(ra_m), pos_to_num(ra_s), pos_to_num(dec_d), pos_to_num(dec_m), pos_to_num(dec_s))))
 
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
