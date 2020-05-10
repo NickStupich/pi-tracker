@@ -51,9 +51,13 @@
 		    socket.on("log_msg", function(msg) {
 		    	console.log("new log: ", msg);
 		    	$("#NewLogs").append(msg.value.replace('\n', '</p>'));
+                        var element = document.getElementById('NewLogs');
+                        element.scrollTop = element.scrollHeight;
 		    });
 		    socket.on("error_msg", function(msg) {
 		    	$("#ErrorLogs").append(msg.value.replace('\n', '</p>'));
+                        var element = document.getElementById('NewLogs');
+                        element.scrollTop = element.scrollHeight;
 		    });
 
 		    $("#startTrackingButton").change(function() {
@@ -150,8 +154,10 @@
 
 		    $("#goto_button").click(function() {
 		    	socket.emit("goto_position", $("#gotoRAH").val(), $("#gotoRAM").val(), $("#gotoRAS").val(), $("#gotoDecD").val(), $("#gotoDecM").val(), $("#gotoDecS").val())
-		    })
+		    });
 
+                    $("solve_button").click(function() {
+                        socket.emit("solve_image")});
 
 		});
 	</script>
@@ -251,6 +257,7 @@
 		DEC (M): <input id="gotoDecM"></br>
 		DEC (S): <input id="gotoDecS"></br>
 		<button type="button" class="button" id="goto_button">GOTO</button>
+                <button type="button" class="button" id="solve_button">SOLVE</button>
 	</div>
 
 	<div>Logs<div id="NewLogs" style="height:300px;width:400px;overflow:auto;border:2px solid black"></div></div>

@@ -131,6 +131,11 @@ def goto_position(ra_h, ra_m, ra_s, dec_d, dec_m, dec_s):
     print('goto_position', ra_h, ra_m, ra_s, dec_d, dec_m, dec_s)
     r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis((ra_degrees, dec_degrees)))
 
+@socketio.on('solve_image', namespace='/test')
+def solve_image():
+    r.publish(messages.CMD_SOLVE_IMAGE, "")
+
+
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
     r.publish(messages.CMD_START_TRACKING, "")
@@ -209,13 +214,13 @@ def dec_forward_stop():
 
 @socketio.on('ra_back_start', namespace='/test')
 def ra_back_start(speed):
-    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(-speed))
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(speed))
 @socketio.on('ra_back_stop', namespace='/test')
 def ra_back_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0))
 @socketio.on('ra_forward_start', namespace='/test')
 def ra_forward_start(speed):
-    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(speed))
+    r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(-speed))
 @socketio.on('ra_forward_stop', namespace='/test')
 def ra_forward_stop():
     r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0))

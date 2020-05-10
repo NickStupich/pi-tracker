@@ -1,7 +1,7 @@
 import time
 import math
 import threading
-
+import datetime
 from dspin_constants import *
 
 import is_pi
@@ -46,21 +46,24 @@ class Dspin_motor(object):
 
 
 	def __init__(self, bus, cs_pin, slave_select_pin, reset_pin):
-		Dspin_motor.init_toggle_reset_pin(reset_pin)
+                Dspin_motor.init_toggle_reset_pin(reset_pin)
 
-		self.slave_select_gpio = LED(slave_select_pin)
-		self.spi = SpiDev()
+                self.slave_select_gpio = LED(slave_select_pin)
+                self.spi = SpiDev()
 
-		self.slave_select_gpio.on()
+                self.slave_select_gpio.on()
 
-		self.spi.open(bus, cs_pin)
-		self.spi.max_speed_hz = 10000
-		self.spi.mode = 0
-		self.spi.lsbfirst = False
-		#spi.no_cs = True
-		#spi.loop = False
+                self.spi.open(bus, cs_pin)
+                self.spi.max_speed_hz = 10000
+                self.spi.mode = 0
+                self.spi.lsbfirst = False
+                #spi.no_cs = True
+                #spi.loop = False
 
-		self.connect_l6470()
+                self.connect_l6470()
+                self.last_steps_count_time = datetime.datetime.now()
+                self.current_speed = 0
+                self.absolute_pos_manual_count = 0
 
 	def dspin_xfer(self, data):
 		data = data & 0xFF
@@ -135,16 +138,18 @@ class Dspin_motor(object):
 		return temp
 
 	def dspin_Run(self, dir, speed):
-		speed = int(speed)
-		# print('speed: ', speed)
-		Dspin_motor.__spi_lock.acquire()
-		self.dspin_xfer(dSPIN_RUN | dir)
-		if speed > 0xFFFFF: speed = 0xFFFFF
+                speed = int(speed)
+                # print('speed: ', speed)
+                Dspin_motor.__spi_lock.acquire()
+                self.dspin_xfer(dSPIN_RUN | dir)
+                if speed > 0xFFFFF: speed = 0xFFFFF
 
-		self.dspin_xfer(speed >> 16)
-		self.dspin_xfer(speed >> 8)
-		self.dspin_xfer(speed)
-		Dspin_motor.__spi_lock.release()
+                self.dspin_xfer(speed >> 16)
+                self.dspin_xfer(speed >> 8)
+                self.dspin_xfer(speed)
+                Dspin_motor.__spi_lock.release()
+                
+                self.current_speed = speed * (1 if dir == FWD else -1)
 
 	def dspin_SoftStop(self):
 		Dspin_motor.__spi_lock.acquire()
@@ -159,6 +164,7 @@ class Dspin_motor(object):
 		return int(result)
 
 	def dspin_GetPositionSteps(self):
+                
                 Dspin_motor.__spi_lock.acquire()
                 result = self.dspin_GetParam(dSPIN_ABS_POS)
                 result = twos_comp(result, 22)
@@ -166,6 +172,15 @@ class Dspin_motor(object):
                 
                 #result &= 0xFF80
                 result /= 16
+                
+                now = datetime.datetime.now()
+                elapsed_seconds = (now - self.last_steps_count_time).total_seconds()
+                self.last_steps_count_time = now
+                
+                steps_change = elapsed_seconds * self.current_speed/67.106
+                self.absolute_pos_manual_count += steps_change
+                #print(result, self.absolute_pos_manual_count)
+                return self.absolute_pos_manual_count
 
                 return result
 
