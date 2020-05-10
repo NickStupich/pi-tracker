@@ -13,6 +13,9 @@ import redis_helpers
 import redis
 import functools
 
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
@@ -112,8 +115,21 @@ def goto_position(ra_h, ra_m, ra_s, dec_d, dec_m, dec_s):
             return float(pos_str)
         else:
             return 0
+
+    ra_h = pos_to_num(ra_h)
+    ra_m = pos_to_num(ra_m)
+    ra_s = pos_to_num(ra_s)
+    dec_d = pos_to_num(dec_d)
+    dec_m = pos_to_num(dec_m)
+    dec_s = pos_to_num(dec_s)
+
+    coords = SkyCoord(ra = ra_h * u.hour + ra_m * u.minute + ra_s * u.second, dec = dec_d * u.deg + dec_m * u.arcminute + dec_s * u.arcsecond)
+
+    ra_degrees = coords.ra.deg
+    dec_degrees = coords.dec.deg
+
     print('goto_position', ra_h, ra_m, ra_s, dec_d, dec_m, dec_s)
-    r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis((pos_to_num(ra_h), pos_to_num(ra_m), pos_to_num(ra_s), pos_to_num(dec_d), pos_to_num(dec_m), pos_to_num(dec_s))))
+    r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis((ra_degrees, dec_degrees)))
 
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():

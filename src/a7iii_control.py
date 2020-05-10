@@ -164,17 +164,20 @@ def test_solve_image(image_path_raw, blind=True, arcsecperpix = (9.3,9.4), ra_es
     # /usr/local/astrometry/bin/solve-field ~/DSC07653.jpg -L {ar} -H 10 -u arcsecperpix --overwrite --ra 36 --dec 64 --radius 5
 
 def test_take_and_solve():
-    img_path = test_take_gphoto()
+    img_path = test_take_gphoto(exposure_time_seconds = 5)
     start = datetime.now()
-    ra,dec = test_solve_image(img_path)
+    # arcsecperpix = (9.3, 9.4)
+    arcsecperpix = (2.0, 2.2)
+    ra,dec = test_solve_image(img_path, arcsecperpix = arcsecperpix)
     print('solving took: ', (datetime.now() - start))
     print(ra,dec)
 
-    img_path2 = test_take_gphoto()
-    start = datetime.now()
-    ra,dec = test_solve_image(img_path2, blind=False, ra_est = ra, dec_est = dec)
-    print('solving again took: ', (datetime.now() - start))
-    print(ra,dec)
+    if 0:
+        img_path2 = test_take_gphoto()
+        start = datetime.now()
+        ra,dec = test_solve_image(img_path2, blind=False, ra_est = ra, dec_est = dec)
+        print('solving again took: ', (datetime.now() - start))
+        print(ra,dec)
 
     broadcast_current_position(ra, dec)
 
@@ -183,7 +186,7 @@ def broadcast_current_position(ra, dec):
     r.publish(messages.CMD_SET_ABSOLUTE_CURRENT_POSITION, redis_helpers.toRedis((ra, dec)))
 
 if __name__ == "__main__":
-    # test_take_and_solve()
+    test_take_and_solve()
     # test_take_gphoto()
     # test_solve_image("/home/nick/test_solving_images/DSC09619.ARW")
-    broadcast_current_position(17, 42)
+    # broadcast_current_position(-17, -42)

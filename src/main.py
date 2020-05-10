@@ -14,6 +14,7 @@ import camera_adjuster
 import dithering
 import messages
 import coordinates_calibration
+import gotoer
 
 if __name__ == '__main__':
     cam = camera.Camera()
@@ -53,6 +54,6 @@ if __name__ == '__main__':
     ditherer.start()
 
     coordinates_cal = coordinates_calibration.CoordinatesCalibration()
-    #coordinates_cal.start()
+    goto = gotoer.Gotoer()
 
     web_ui.run()
