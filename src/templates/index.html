@@ -148,6 +148,10 @@
 			    }
 		    });
 
+		    $("#goto_button").click(function() {
+		    	socket.emit("goto_position", $("#gotoRAH"), $("#gotoRAM"), $("#gotoRAS"), $("#gotoDecD"), $("#gotoDecM"), $("#gotoDecS"))
+		    })
+
 
 		});
 	</script>
@@ -237,10 +241,16 @@
 		Orthogonal Error: <span id="STATUS_ORTHOGONAL_ERROR"></span></br>
 		Parallel Tracking Error: <span id="STATUS_PARALLEL_ERROR"></span></br>
 		Current Position <span id="STATUS_DISPLAY_CURRENT_RA_DEC"></span></br>
-                <!--
-                Current RA Position: <span id="STATUS_RA_POSITION"></span></br>
-		Current DEC Position: <span id="STATUS_DEC_POSITION"></span></br>
-                -->
+	</div>
+
+	<div id="goto">
+		RA (H): <input id="gotoRAH"></br>
+		RA (M): <input id="gotoRAM"></br>
+		RA (S): <input id="gotoRAS"></br>
+		DEC (D): <input id="gotoDecD"></br>
+		DEC (M): <input id="gotoDecM"></br>
+		DEC (S): <input id="gotoDecS"></br>
+		<button type="button" class="button" id="goto_button">GOTO</button>
 	</div>
 
 	<div>Logs<div id="NewLogs" style="height:300px;width:400px;overflow:auto;border:2px solid black"></div></div>

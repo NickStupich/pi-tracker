@@ -105,6 +105,11 @@ def setShutterSpeed(value):
 def setVisualGain(value):
     r.publish(messages.CMD_SET_VISUAL_GAIN, redis_helpers.toRedis(int(value)))
 
+@socketio.on('goto_position', namespace='/test')
+def goto_position(ra_h, ra_m, ra_s, dec_d, dec_m, dec_s):
+    print('goto_position', ra_h, ra_m, ra_s, dec_d, dec_m, dec_s)
+    r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis(int(ra_h), int(ra_m), float(ra_s), int(dec_d), int(dec_m), float(dec_s)))
+
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
     r.publish(messages.CMD_START_TRACKING, "")
