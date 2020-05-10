@@ -4,6 +4,11 @@ import redis
 import datetime
 import messages
 
+from astropy.time import Time
+from astropy.coordinates import EarthLocation, SkyCoord
+
+vancouver_location = EarthLocation(lat=49.3, lon = -123.1)
+
 class CoordinatesCalibration(object):
         def __init__(self):
                 self.r = redis.StrictRedis(host='localhost', port=6379)
@@ -16,7 +21,11 @@ class CoordinatesCalibration(object):
                 self.thread = self.p.run_in_thread(sleep_time = 0.1)
 
                 self.ha_relative_degrees = 0
-                self.dec_degrees = 0
+                self.relative_dec_degrees = 0
+                self.relative_ra_degrees = 0
+
+                self.ra_zero_pos_degrees = 0
+                self.dec_zero_pos_degrees = 0
 
         def stop_all_handler(self):
                 self.thread.stop()
@@ -25,8 +34,11 @@ class CoordinatesCalibration(object):
                 ra, dec = redis_helpers.fromRedis(message['data'])
                 print('received absolute position update: ', ra, dec)
 
+                self.ra_zero_pos_degrees = self.relative_ra_degrees - ra
+                self.dec_zero_pos_degrees = self.relative_dec_degrees - dec
+
         def update_dec_handler(self, message):
-                self.dec_degrees += redis_helpers.fromRedis(message['data'])
+                self.relative_dec_degrees += redis_helpers.fromRedis(message['data'])
                 self.on_new_position()
 
         def update_ha_handler(self, message):
@@ -34,11 +46,23 @@ class CoordinatesCalibration(object):
                 self.on_new_position()
 
         def on_new_position(self):
-                #TODO: make this right
+                t = Time(datetime.datetime.utcnow(), scale='utc', location=vancouver_location)
+                t.delta_ut1_utc = 0
+                sidereal_degrees = t.sidereal_time('mean').degree
+                self.relative_ra_degrees = sidereal_degrees - self.ha_relative_degrees               
 
-                
+                absolute_ra_degrees = self.relative_ra_degrees - self.ra_zero_pos_degrees
+                absolute_dec_degrees = self.relative_dec_degrees - self.dec_zero_pos_degrees
+                c = SkyCoord(ra=absolute_ra_degrees, dec=absolute_dec_degrees, frame='icrs', unit='deg')
+                ra_output = '%dh%02dm%.2fs' % (c.ra.hms)
+                dec_output = '%dd%2d%.1fs' % (c.dec.dms)
 
-                ra_output = '%.5f' % self.ha_relative_degrees
-                dec_output = '%.5f' % self.dec_degrees
-                output_str = '%s/%s' % (ra_output, dec_output)
-                self.r.publish(messages.STATUS_DISPLAY_CURRENT_RA_DEC, redis_helpers.toRedis(output_str))                
+                #output_str = '%s/%s' % (ra_output, dec_output)
+
+                #c = SkyCoord(ra=absolute_ra_degrees, dec=absolute_dec_degrees, frame='icrs', unit='deg')
+                #ra_output = '%dh%02dm%.2fs' % (c.ra.hms)
+                #dec_output = '%dd%2d%.1fs' % (c.dec.dms)
+
+                #output_str = '%s/%s' % (ra_output, dec_output)
+                #self.r.publish(messages.STATUS_DISPLAY_CURRENT_RA_DEC, redis_helpers.toRedis(output_str))                
+                self.r.publish(messages.STATUS_DISPLAY_CURRENT_RA_DEC, redis_helpers.toRedis((absolute_ra_degrees, absolute_dec_degrees)))

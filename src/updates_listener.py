@@ -6,6 +6,8 @@ import datetime
 import messages
 from flask.json import jsonify
 
+from astropy.coordinates import SkyCoord
+
 class UpdatesListener(object):
     def __init__(self, socketio):
 
@@ -40,7 +42,8 @@ class UpdatesListener(object):
         #self.add_simple_parameter(messages.STATUS_DEC_POSITION)
         #self.p.subscribe(**{messages.STATUS_RA_POSITION : self.updatePosition})
         #self.p.subscribe(**{messages.STATUS_DEC_POSITION : self.updatePosition})
-        self.add_simple_parameter(messages.STATUS_DISPLAY_CURRENT_RA_DEC)
+        #self.add_simple_parameter(messages.STATUS_DISPLAY_CURRENT_RA_DEC)
+        self.p.subscribe(**{messages.STATUS_DISPLAY_CURRENT_RA_DEC : self.updatePosition})
 
         self.p.subscribe(**{messages.STOP_ALL: self.stop_all_handler,
                             messages.STATUS_GET_ALL_STATUS : self.get_all_status})
@@ -70,11 +73,15 @@ class UpdatesListener(object):
 
     def updatePosition(self, message):
         channel = message['channel'].decode('ASCII')
-        position = redis_helpers.fromRedis(message['data'])
-        #position_str = "%02dh%02dm%02ds" % (position[0], position[1], position[2])
-        position_str = "%d arcseconds" % position
-        self.socketio.emit(channel, {'value' : position_str}, namespace='/test')
-        self.current_values[str(channel)] = position_str
+        ra, dec = redis_helpers.fromRedis(message['data'])
+
+        c = SkyCoord(ra=ra, dec=dec, frame='icrs', unit='deg')
+        ra_output = '%dh%02dm%.2fs' % (c.ra.hms)
+        dec_output = '%dd%2dm%.1fs' % (c.dec.dms)
+
+        output_str = '%s/%s' % (ra_output, dec_output)
+        self.socketio.emit(messages.STATUS_DISPLAY_CURRENT_RA_DEC, {'value' : output_str}, namespace='/test')
+        self.current_values[str(channel)] = output_str
 
     def stop_all_handler(self):
         self.thread.stop()
