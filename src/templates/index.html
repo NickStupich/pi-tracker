@@ -156,7 +156,7 @@
 		    	socket.emit("goto_position", $("#gotoRAH").val(), $("#gotoRAM").val(), $("#gotoRAS").val(), $("#gotoDecD").val(), $("#gotoDecM").val(), $("#gotoDecS").val())
 		    });
 
-                    $("solve_button").click(function() {
+                    $("#solve_button").click(function() {
                         socket.emit("solve_image")});
 
 		});
