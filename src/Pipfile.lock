@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7e7ef69da7248742e869378f8421880cf8f0017f96d94d086813baa518a65489"
+            "sha256": "344154c3bf232c4711530ebf50d24fc9a19538ba2fa0d987da038925fd843b11"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -15,6 +15,22 @@
             }
         ]
     },
-    "default": {},
+    "default": {
+        "pigpio": {
+            "hashes": [
+                "sha256:8dbeb9445c128654e9368e8e1e4c4b06602b450e6556bebccc2efae82fb5dc85",
+                "sha256:f5f2562f8f7aab0c6cf7235e501e72bedbf063efda725c6086c352b5e4b2f59d"
+            ],
+            "index": "pypi",
+            "version": "==1.46"
+        },
+        "rpio": {
+            "hashes": [
+                "sha256:b89f75dec9de354681209ebfaedfe22b7c178aacd91a604a7bd6d92024e4cf7e"
+            ],
+            "index": "pypi",
+            "version": "==0.10.0"
+        }
+    },
     "develop": {}
 }
