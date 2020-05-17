@@ -1,4 +1,6 @@
 *.pyc
 web/images/
 *.txt
+*.jpeg
+*.arw
 *.rdb
