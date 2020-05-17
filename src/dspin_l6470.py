@@ -239,16 +239,16 @@ if __name__ == "__main__":
 		
 
 	#bus = 1
-	bus=1
+	bus=0
 	cs_pin = 0
 
 	slave_select_pin = 25
 	#slave_select_pin=12
 	# busy_pin = 2
-	reset_pin = 3
+	reset_pin = 17
 
-	motor1 = Dspin_motor(bus, cs_pin, 25, reset_pin)
-	motor2 = Dspin_motor(bus, cs_pin, 26, reset_pin)
+	motor1 = Dspin_motor(0, 0, 22, reset_pin)
+	motor2 = Dspin_motor(1, 0, 26, reset_pin)
 	speed = 2000
 	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(speed))
 	time.sleep(2); print(motor1.dspin_GetPositionSteps()); motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
