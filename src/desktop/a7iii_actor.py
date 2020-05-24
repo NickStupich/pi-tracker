@@ -1,3 +1,10 @@
+import sys
+import os
+
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+
 import redis_helpers
 import redis
 
@@ -9,7 +16,6 @@ import rawpy
 import gphoto2 as gp
 import subprocess
 import time
-import os
 
 class a7iii_actor(object):
     def __init__(self):	
@@ -41,35 +47,67 @@ class a7iii_actor(object):
         self.r.publish(messages.CMD_SET_ABSOLUTE_CURRENT_POSITION, redis_helpers.toRedis((ra, dec)))
 
 
-    def take_picture(self, exposure_time_seconds = 5):
+    def take_picture(self, exposure_time_seconds = 5, bulb_mode=False):
 
-        config = self.camera.get_config()
-        OK, bulb_child = gp.gp_widget_get_child_by_name(config, 'bulb')
-        bulb_child.set_value(1)
-        self.camera.set_config(config)
+        if bulb_mode:
+            config = self.camera.get_config()
+            OK, bulb_child = gp.gp_widget_get_child_by_name(config, 'bulb')
+            bulb_child.set_value(1)
+            self.camera.set_config(config)
 
-        time.sleep(exposure_time_seconds)
+            time.sleep(exposure_time_seconds)
 
-        bulb_child.set_value(0)
-        self.camera.set_config(config)
+            bulb_child.set_value(0)
+            self.camera.set_config(config)
 
-        # camera_files = list_camera_files(camera)
-        # print(camera_files)
+            # camera_files = list_camera_files(camera)
+            # print(camera_files)
 
-        timeout = 3000 # miliseconds
-        while True:
-            event_type, event_data = self.camera.wait_for_event(timeout)
+            timeout = 3000 # miliseconds
+            while True:
+                event_type, event_data = self.camera.wait_for_event(timeout)
+                if event_type == gp.GP_EVENT_FILE_ADDED:
+                    cam_file = self.camera.file_get(
+                        event_data.folder, event_data.name, gp.GP_FILE_TYPE_NORMAL)
+                    target_path = os.path.join(os.getcwd(), event_data.name)
+                    print("Image is being saved to {}".format(target_path))
+                    cam_file.save(target_path)
+                elif event_type == gp.GP_EVENT_TIMEOUT:
+                    break
+                else:
+                    # print(event_type)
+                    pass
+
+        else:
+            print('taking non-bulb mode picture')
+            config = self.camera.get_config()
+            OK, speed = gp.gp_widget_get_child_by_name(config, 'shutterspeed')
+            speed.set_value(str(exposure_time_seconds))
+            self.camera.set_config(config)
+
+
+            path = self.camera.capture(gp.GP_CAPTURE_IMAGE)
+            print(path)
+
+            
+            event_type, event_data = self.camera.wait_for_event(exposure_time_seconds)
             if event_type == gp.GP_EVENT_FILE_ADDED:
-                cam_file = self.camera.file_get(
-                    event_data.folder, event_data.name, gp.GP_FILE_TYPE_NORMAL)
-                target_path = os.path.join(os.getcwd(), event_data.name)
-                print("Image is being saved to {}".format(target_path))
-                cam_file.save(target_path)
+                print('event file added')
             elif event_type == gp.GP_EVENT_TIMEOUT:
-                break
+                print('event timeout')
             else:
-                # print(event_type)
-                pass
+                print('something else?', event_type)
+        
+            cam_file = self.camera.file_get(
+                        path.folder, path.name, gp.GP_FILE_TYPE_NORMAL)
+            
+            target_path = os.path.join(os.getcwd(), path.name)
+            # target_path = os.path.join(output_dir, str(count) + '.ARW')
+
+
+            print("{} is being saved to {}".format(path.name, target_path))
+            cam_file.save(target_path)
+
 
         if 0:
             raw_img = rawpy.imread(target_path)

@@ -2,8 +2,8 @@ import time
 import threading
 from datetime import datetime
 import threading
-import messages
-import redis_helpers
+# from .. import messages
+# import redis_helpers
 import redis
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +15,7 @@ import gphoto2 as gp
 import subprocess
 
 
-def continuous_capture(base_folder, exposure_time_seconds = 30, num_exposures = 1E3):
+def continuous_capture_bulb(base_folder, exposure_time_seconds = 30, num_exposures = 1E3):
 
     output_dir = os.path.join(base_folder, datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     os.makedirs(output_dir)
@@ -72,5 +72,49 @@ def continuous_capture(base_folder, exposure_time_seconds = 30, num_exposures = 
     camera.exit()
 
 
+def continuous_capture(base_folder, exposure_time_seconds = 30, num_exposures = 1E3):
+
+    output_dir = os.path.join(base_folder, datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    os.makedirs(output_dir)
+
+    camera = gp.Camera()
+    camera.init()
+    
+    config = camera.get_config()
+    OK, speed = gp.gp_widget_get_child_by_name(config, 'shutterspeed')
+    speed.set_value(str(exposure_time_seconds))
+    camera.set_config(config)
+
+    count = 0
+    while 1:
+        print(count)
+        if count > num_exposures: break
+
+        path = camera.capture(gp.GP_CAPTURE_IMAGE)
+
+        event_type, event_data = camera.wait_for_event(exposure_time_seconds)
+        if event_type == gp.GP_EVENT_FILE_ADDED:
+            print('event file added')
+        elif event_type == gp.GP_EVENT_TIMEOUT:
+            print('event timeout')
+        else:
+            print('something else?', event_type)
+
+        cam_file = camera.file_get(
+                    path.folder, path.name, gp.GP_FILE_TYPE_NORMAL)
+        
+        #target_path = os.path.join(os.getcwd(), event_data.name)
+        target_path = os.path.join(output_dir, str(count) + '.ARW')
+
+
+        print("{} is being saved to {}".format(path.name, target_path))
+        cam_file.save(target_path)
+
+
+        count += 1
+
+    camera.exit()
+
+
 if __name__ == "__main__":
-    continuous_capture(base_folder = '/media/sf_ubuntu', exposure_time_seconds = 60, num_exposures = 5*60)
+    continuous_capture(base_folder = '/media/sf_ubuntu', exposure_time_seconds = 30, num_exposures = 4*120)

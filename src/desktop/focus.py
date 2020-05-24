@@ -71,7 +71,7 @@ def fit_single_star(img, x, y, peak_value = 1):
     return x_fwhm, y_fwhm
 
 
-def test():
+def test_fwhm_calc():
 
     # img_fn = '/media/sf_ubuntu/2020-05-14_22-55-10/good/0.ARW'
     img_fn = '/media/sf_ubuntu/focus_test/DSC02191.ARW'
@@ -150,6 +150,15 @@ def calc_fwhm(img_fn):
 
     return overall_fwhm
 
+def test_focus_sweep():
+
+    camera = gp.Camera()
+    camera.init()
+    
+    config = camera.get_config()
+    OK, bulb_child = gp.gp_widget_get_child_by_name(config, 'bulb')
 
 if __name__ == "__main__":
-    test()
+    # test_fwhm_calc()
+
+    test_focus_sweep()
