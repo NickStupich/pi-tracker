@@ -34,8 +34,20 @@ class CoordinatesCalibration(object):
                 ra, dec = redis_helpers.fromRedis(message['data'])
                 print('received absolute position update: ', ra, dec)
 
-                self.ra_zero_pos_degrees = self.relative_ra_degrees - ra
-                self.dec_zero_pos_degrees = self.relative_dec_degrees - dec
+                if ra is None or dec is None:
+                    print('getting absolute position failed, ignoring None(s)')
+                else:
+                    new_ra_zero_pos = self.relative_ra_degrees - ra
+                    new_dec_zero_pos = self.relative_dec_degrees - dec
+
+                    print('coodinate zero pos update deltas: ', self.ra_zero_pos_degrees - new_ra_zero_pos, self.dec_zero_pos_degrees - new_dec_zero_pos)
+
+                    self.ra_zero_pos_degrees = new_ra_zero_pos
+                    self.dec_zero_pos_degrees = new_dec_zero_pos
+
+
+                    #self.ra_zero_pos_degrees = self.relative_ra_degrees - ra
+                    #self.dec_zero_pos_degrees = self.relative_dec_degrees - dec
 
         def update_dec_handler(self, message):
                 self.relative_dec_degrees += redis_helpers.fromRedis(message['data'])

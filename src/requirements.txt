@@ -1,2 +1,23 @@
 -i https://pypi.org/simple
-
+astropy==4.0.1.post1
+click==7.1.2
+colorzero==1.1
+flask-socketio==4.3.0
+flask==1.1.2
+gpiozero==1.5.1
+itsdangerous==1.1.0
+jinja2==2.11.2
+markupsafe==1.1.1
+numpy==1.18.4
+opencv-contrib-python==4.1.0.25
+picamera==1.13
+pigpio==1.46
+python-engineio==3.12.1
+python-socketio==4.5.1
+redis==3.5.1
+rpio==0.10.0
+scipy==1.4.1
+six==1.14.0
+spidev==3.4
+werkzeug==1.0.1
+wtforms==2.3.1

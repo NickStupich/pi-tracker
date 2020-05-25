@@ -35,18 +35,29 @@ class Dspin_motor(object):
 	def init_toggle_reset_pin(cls, reset_pin):
 		if not cls.__has_toggled_reset_pin:
 			cls.__has_toggled_reset_pin = True
-			cls.reset_gpio = LED(reset_pin)
-			cls.reset_gpio.on()
-			time.sleep(0.1)
-			cls.reset_gpio.off()
-			time.sleep(0.1)
-			cls.reset_gpio.on()
-			time.sleep(0.1)
+			#cls.reset_gpio = LED(reset_pin)
+			#cls.reset_gpio.on()
+			#time.sleep(0.1)
+			#cls.reset_gpio.off()
+			#time.sleep(0.1)
+			#cls.reset_gpio.on()
+			#time.sleep(0.1)
 			Dspin_motor.__spi_lock = threading.Lock()
 
 
 	def __init__(self, bus, cs_pin, slave_select_pin, reset_pin):
+                print('setting up dspin interface on pins: ', bus, cs_pin, slave_select_pin, reset_pin)
                 Dspin_motor.init_toggle_reset_pin(reset_pin)
+
+                self.reset_gpio = LED(reset_pin)
+                self.reset_gpio.on()
+                time.sleep(0.1)
+                self.reset_gpio.off()
+                time.sleep(0.1)
+                self.reset_gpio.on()
+                time.sleep(0.1)
+
+
 
                 self.slave_select_gpio = LED(slave_select_pin)
                 self.spi = SpiDev()
@@ -55,7 +66,7 @@ class Dspin_motor(object):
 
                 self.spi.open(bus, cs_pin)
                 self.spi.max_speed_hz = 10000
-                self.spi.mode = 0
+                self.spi.mode = 3
                 self.spi.lsbfirst = False
                 #spi.no_cs = True
                 #spi.loop = False
@@ -167,12 +178,18 @@ class Dspin_motor(object):
                 
                 Dspin_motor.__spi_lock.acquire()
                 result = self.dspin_GetParam(dSPIN_ABS_POS)
-                result = twos_comp(result, 22)
                 Dspin_motor.__spi_lock.release()
-                
+                #print(result)
+                result = twos_comp(result, 22)
                 #result &= 0xFF80
                 result /= 16
-                
+                #print(result)
+                return result
+
+
+
+
+
                 now = datetime.datetime.now()
                 elapsed_seconds = (now - self.last_steps_count_time).total_seconds()
                 self.last_steps_count_time = now
@@ -237,25 +254,24 @@ class Dspin_motor(object):
 
 if __name__ == "__main__":
 		
-
-	#bus = 1
 	bus=0
 	cs_pin = 0
-
-	slave_select_pin = 25
-	#slave_select_pin=12
-	# busy_pin = 2
 	reset_pin = 17
 
-	motor1 = Dspin_motor(0, 0, 22, reset_pin)
-	motor2 = Dspin_motor(1, 0, 26, reset_pin)
+	motor1 = Dspin_motor(bus, cs_pin, 22, reset_pin)
+	motor2 = Dspin_motor(bus, cs_pin, 26, 19)
+	time.sleep(1)
 	speed = 2000
 	motor1.dspin_Run(FWD, motor1.dspin_SpdCalc(speed))
-	time.sleep(2); print(motor1.dspin_GetPositionSteps()); motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
+	time.sleep(2)
+	print(motor1.dspin_GetPositionSteps(), motor2.dspin_GetPositionSteps())
+	motor1.dspin_Run(REV, motor1.dspin_SpdCalc(speed))
 	time.sleep(2)
 	motor1.dspin_SoftStop()
 	motor2.dspin_Run(FWD, motor2.dspin_SpdCalc(speed))
 	time.sleep(2)
+	print(motor1.dspin_GetPositionSteps(), motor2.dspin_GetPositionSteps())
+	
 	motor2.dspin_Run(REV, motor2.dspin_SpdCalc(speed))
 
 	time.sleep(2)

@@ -8,6 +8,17 @@ verify_ssl = true
 [packages]
 pigpio = "*"
 rpio = "*"
+picamera = "*"
+numpy = "*"
+opencv-contrib-python = "==4.1.0.25"
+redis = "*"
+scipy = "*"
+gpiozero = "*"
+spidev = "*"
+flask = "*"
+astropy = "*"
+flask-socketio = "*"
+wtforms = "*"
 
 [requires]
 python_version = "3.7"

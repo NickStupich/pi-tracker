@@ -43,7 +43,7 @@ if __name__ == '__main__':
     gear_ratio = (99 + 1044./ 2057.) * 27 * 84 / 52.
     steps_per_rotation = 200.
     base_steps_per_second_dec = -steps_per_rotation * gear_ratio / seconds_per_rotation 
-    motor_dec = motor_control.MotorControl(bus=1, cs_pin = 0, slave_pin=26, reset_pin = 17, 
+    motor_dec = motor_control.MotorControl(bus=0, cs_pin = 0, slave_pin=26, reset_pin = 19, 
             speed_adjustment_msg = messages.CMD_SET_SPEED_ADJUSTMENT_DEC,
             base_steps_per_second = base_steps_per_second_dec,
             default_speed = 0,
