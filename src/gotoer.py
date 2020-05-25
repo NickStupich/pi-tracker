@@ -77,6 +77,9 @@ class Gotoer(object):
                 if self.ra_direction == 0 and self.dec_direction == 0:
                     self.goto_in_progress = False
                     print('goto complete!')
+
+                    self.r.publish(messages.STATUS_GOTO_COMPLETE, redis_helpers.toRedis(""))
+
                 else:
                     new_dec_speed = self.goto_speed_calc(dec_diff)
                     self.r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_DEC, redis_helpers.toRedis(new_dec_speed * self.dec_direction))

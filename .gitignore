@@ -2,5 +2,6 @@
 web/images/
 *.txt
 *.jpeg
+*.jpg
 *.arw
 *.rdb
