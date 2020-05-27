@@ -24,7 +24,10 @@ def test():
     err_ra = -12  / 60.
     err_dec =  - 21 / 60.
 
+    err_elevation, err_azimuth = get_polar_align_error(ha1, dec1, ha2, dec2, err_ra, err_dec, latitude)
 
+
+def get_polar_align_error(ha1, dec1, ha2, dec2, err_ra, err_dec, latitude):
     d = cos_deg(latitude) * (tan_deg(dec1) + tan_deg(dec2)) * (1 - cos_deg(ha1 - ha2))
 
     m11 = cos_deg(latitude) * (sin_deg(ha2) - sin_deg(ha1)) / d
@@ -40,6 +43,8 @@ def test():
 
     print(err_azimuth)
     print('arcmins: ', err_azimuth * 60)
+
+    return err_elevation, err_azimuth
 
 
 if __name__ == "__main__":

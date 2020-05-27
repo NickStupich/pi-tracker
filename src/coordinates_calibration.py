@@ -7,7 +7,7 @@ import messages
 from astropy.time import Time
 from astropy.coordinates import EarthLocation, SkyCoord
 
-vancouver_location = EarthLocation(lat=49.3, lon = -123.1)
+vancouver_location = EarthLocation(lat=49.3124536, lon = -123.0756053)
 
 class CoordinatesCalibration(object):
         def __init__(self):
@@ -40,7 +40,10 @@ class CoordinatesCalibration(object):
                     new_ra_zero_pos = self.relative_ra_degrees - ra
                     new_dec_zero_pos = self.relative_dec_degrees - dec
 
-                    print('coodinate zero pos update deltas: ', self.ra_zero_pos_degrees - new_ra_zero_pos, self.dec_zero_pos_degrees - new_dec_zero_pos)
+                    ra_error = self.ra_zero_pos_degrees - new_ra_zero_pos
+                    dec_error = self.dec_zero_pos_degrees - new_dec_zero_pos
+                    print('coodinate zero pos update deltas: ', ra_error, dec_error)
+                    self.r.publish(messages.CMD_SET_IMAGE_SOLVING_ERROR, redis_helpers.toRedis((ra, dec, ra_error, dec_error)))
 
                     self.ra_zero_pos_degrees = new_ra_zero_pos
                     self.dec_zero_pos_degrees = new_dec_zero_pos

@@ -112,12 +112,17 @@ class a7iii_actor(object):
                 print("{} is being saved to {}".format(path.name, target_path))
                 cam_file.save(target_path)
         else:
-            target_path = 'capt00000.arw'
+            target_path = '/home/nick/pi-tracker/src/desktop/capt00002.arw'
 
         return target_path
 
     def solve_image(self, image_path_raw, blind=True, arcsecperpix = (9.3,9.4), ra_est = None, dec_est = None, radius = 5, sigma=4):
-        
+    
+        if USE_FAKE_IMAGES:
+            print('faking solving')
+            time.sleep(5)
+            return 180, 17
+
         jpeg_path = '/tmp/conversion.jpeg'
         raw_img = rawpy.imread(image_path_raw)
         img_rgb = raw_img.postprocess(no_auto_bright=True)
