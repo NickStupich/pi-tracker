@@ -16,6 +16,8 @@ ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS = 10
 MAX_ADJUSTMENT = 1
 GUIDE_CAM_ARC_SECONDS_PER_PIXEL = 4.1 #??
 
+SMOOTHED_STATUS_EMA_COEF = 1 - 2 / (60*5 +1) #5 minutes = 86% of the moving average
+
 def angle_between_vectors(v1, v2):
     return np.arccos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))) * 180 / np.pi
 
@@ -276,7 +278,13 @@ class CameraAdjuster(threading.Thread):
                                     raw_adjustment_dec = 0
                                     current_state = AdjusterStates.GUIDING
 
-                                #TODO: back to original position
+                                    #reset smoothed adjustment values
+                                    smoothed_ra_num = 0
+                                    smoothed_abs_ra_num = 0
+                                    smoothed_dec_num = 0
+                                    smoothed_dec_abs_num = 0
+                                    smoothed_denom = 0
+
 
                             elif current_state == AdjusterStates.GUIDING:
                                 
@@ -285,7 +293,6 @@ class CameraAdjuster(threading.Thread):
                                 #TODO: filter realllll slow instead of just making it slow
                                 raw_adjustment_dec = orthogonal_distance / ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS
                                 filtered_adjustment_dec = np.clip(raw_adjustment_dec, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
-
 
                         r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(filtered_adjustment_ra))
                         r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(raw_adjustment_ra))
@@ -301,12 +308,19 @@ class CameraAdjuster(threading.Thread):
                         r.publish(messages.STATUS_GUIDING_STATUS, redis_helpers.toRedis(guiding_status))
 
 
+                        smoothed_ra_num = smoothed_ra_num * SMOOTHED_STATUS_EMA_COEF + raw_adjustment_ra
+                        smoothed_abs_ra_num = smoothed_abs_ra_num * SMOOTHED_STATUS_EMA_COEF + np.abs(raw_adjustment_ra)
+                        smoothed_dec_num = smoothed_dec_num * SMOOTHED_STATUS_EMA_COEF + raw_adjustment_dec
+                        smoothed_abs_dec_num = smoothed_abs_dec_num * SMOOTHED_STATUS_EMA_COEF + np.abs(raw_adjustment_dec)
+                        smoothed_denom = smoothed_denom * SMOOTHED_STATUS_EMA_COEF + 1
+
+                        r.publish(messages.STATUS_SMOOTHED_RA_ADJUSTMENT, redis_helpers.toRedis(smoothed_ra_num / smoothed_denom))
+                        r.publish(messages.STATUS_SMOOTHED_ABS_RA_ADJUSTMENT, redis_helpers.toRedis(smoothed_abs_ra_num / smoothed_denom))
+                        r.publish(messages.STATUS_SMOOTHED_DEC_ADJUSTMENT, redis_helpers.toRedis(smoothed_dec_num / smoothed_denom))
+                        r.publish(messages.STATUS_SMOOTHED_ABS_DEC_ADJUSTMENT, redis_helpers.toRedis(smoothed_abs_dec_num / smoothed_denom))
+
                     else:
                         print('unknown state: ', current_state)
-
-
-
-
 
 if __name__ == "__main__":
     adjuster = CameraAdjuster()

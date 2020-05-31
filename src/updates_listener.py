@@ -30,6 +30,11 @@ class UpdatesListener(object):
         self.add_simple_parameter(messages.STATUS_GUIDE_VECTOR_RA)
         self.add_simple_parameter(messages.STATUS_GUIDE_VECTOR_DEC)
 
+        self.add_simple_parameter(messages.STATUS_SMOOTHED_RA_ADJUSTMENT)
+        self.add_simple_parameter(messages.STATUS_SMOOTHED_ABS_RA_ADJUSTMENT)
+        self.add_simple_parameter(messages.STATUS_SMOOTHED_DEC_ADJUSTMENT)
+        self.add_simple_parameter(messages.STATUS_SMOOTHED_ABS_DEC_ADJUSTMENT)
+
         self.add_simple_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_RA)
         self.add_simple_parameter(messages.CMD_SET_SPEED_ADJUSTMENT_DEC)
 
