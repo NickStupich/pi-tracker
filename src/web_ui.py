@@ -196,6 +196,14 @@ def disable_dithering():
 def set_dithering_magnitude(magnitude):
     r.publish(messages.CMD_SET_DITHERING_MAGNITUDE, redis_helpers.toRedis(magnitude))
 
+@socketio.on('set_ra_ema_value', namespace='/test')
+def set_ra_ema_value(value):
+    r.publish(messages.CMD_SET_RA_EMA_FACTOR, redis_helpers.toRedis(value))
+
+@socketio.on('set_dec_ema_value', namespace='/test')
+def set_dec_ema_value(value):
+    r.publish(messages.CMD_SET_DEC_EMA_FACTOR, redis_helpers.toRedis(value))
+
 @socketio.on('set_dithering_interval', namespace='/test')
 def set_dithering_interval(seconds):
     r.publish(messages.CMD_SET_DITHERING_INTERVAL, redis_helpers.toRedis(seconds))

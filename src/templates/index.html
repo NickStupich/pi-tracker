@@ -98,6 +98,17 @@
 		    	socket.emit('set_visual_gain', newValue);
 		    });
 
+
+		    $("#raEmaValue").change(function() {
+		    	var newValue = $(this).val();
+		    	socket.emit('set_ra_ema_value', newValue);
+		    });
+
+		    $("#decEmaValue").change(function() {
+		    	var newValue = $(this).val();
+		    	socket.emit('set_dec_ema_value', newValue);
+		    });
+
 		    var adjust_speed = 100;
 		    $("#dec_back_button").bind("mousedown touchstart", function() {
 		    	socket.emit("dec_back_start", adjust_speed);
@@ -191,6 +202,14 @@
 
 	<div>
 		Visual Gain: <input id="visualGainInput" type="number" value="10"/>
+	</div>
+
+	<div>
+		RA EMA Value: <input id="raEmaValue" type="number" value="0.8"/>
+	</div>
+
+	<div>
+		DEC EMA Value: <input id="decEmaValue" type="number" value="0.8"/>
 	</div>
 
   <div style='width:400px; float:left'>

@@ -11,8 +11,8 @@ import redis_helpers
 
 #TODO: longer after testing?
 VECTOR_ESTIMATION_TIME_SECONDS = 10
-ADJUSTMENT_TARGET_SECONDS = 3 #how 'aggressive' to pull towards ideal spot
-ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS = 10
+RA_ADJUSTMENT_TARGET_SECONDS = 3 #how 'aggressive' to pull towards ideal spot
+ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS = 3
 MAX_ADJUSTMENT = 1
 GUIDE_CAM_ARC_SECONDS_PER_PIXEL = 4.1 #??
 
@@ -54,8 +54,8 @@ class CameraAdjuster(threading.Thread):
         parallel_distance = None
         update_time = None
 
-        filtered_adjustment = 0
-        ema_factor = 0.8        
+        ra_ema_factor = 0.8        
+        dec_ema_factor = 0.8
 
         current_state = AdjusterStates.NOT_GUIDING
 
@@ -69,6 +69,8 @@ class CameraAdjuster(threading.Thread):
         p.subscribe(messages.STATUS_STARTING_TRACKING_POSITION)
         p.subscribe(messages.CMD_SET_DITHERING_POSITION_OFFSET_PIXELS)
         p.subscribe(messages.STATUS_GET_ALL_STATUS)
+        p.subscribe(messages.CMD_SET_RA_EMA_FACTOR)
+        p.subscribe(messages.CMD_SET_DEC_EMA_FACTOR)
 
         start_guiding_dir_1_start_time = None
         start_guiding_dir_1_start_location = None
@@ -196,7 +198,10 @@ class CameraAdjuster(threading.Thread):
                                 r.publish(messages.STATUS_CALIBRATION_DRIFT_ARC_SECONDS, redis_helpers.toRedis(calibration_process_orthogonal_drift))
 
                                 r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(0.))
-                                filtered_adjustment = 0 #reset
+                                
+                                filtered_adjustment_ra = 0 #reset
+                                filtered_adjustment_dec = 0
+
                                 current_state = AdjusterStates.START_GUIDING_DIR_ORTH_1
                                 guiding_dir_orth_start_time = None
                                 print('guiding...')
@@ -239,10 +244,9 @@ class CameraAdjuster(threading.Thread):
                             else:   
                                 orthogonal_distance = np.dot(shift, guide_vector_orthogonal) / (np.linalg.norm(guide_vector_orthogonal)**2)
                             
-                            raw_adjustment_ra = parallel_distance / ADJUSTMENT_TARGET_SECONDS 
+                            raw_adjustment_ra = parallel_distance / RA_ADJUSTMENT_TARGET_SECONDS 
                             clipped_adjustment = np.clip(raw_adjustment_ra, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
-                            filtered_adjustment = filtered_adjustment * ema_factor + clipped_adjustment * (1 - ema_factor)
-                            filtered_adjustment_ra = filtered_adjustment
+                            filtered_adjustment_ra = filtered_adjustment * ra_ema_factor + clipped_adjustment * (1 - ra_ema_factor)
 
                             if current_state == AdjusterStates.START_GUIDING_DIR_ORTH_1:                                
                                 if guiding_dir_orth_start_time is None:
@@ -292,7 +296,8 @@ class CameraAdjuster(threading.Thread):
 
                                 #TODO: filter realllll slow instead of just making it slow
                                 raw_adjustment_dec = orthogonal_distance / ORTHOGONAL_ADJUSTMENT_TARGET_SECONDS
-                                filtered_adjustment_dec = np.clip(raw_adjustment_dec, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
+                                clipped_adjustment_dec = np.clip(raw_adjustment_dec, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
+                                filtered_adjustment_dec = filtered_adjustment_dec * dec_ema_factor + clipped_adjustment_dec * (1 - dec_ema_factor)
 
                         r.publish(messages.CMD_SET_SPEED_ADJUSTMENT_RA, redis_helpers.toRedis(filtered_adjustment_ra))
                         r.publish(messages.STATUS_CURRENT_RAW_ADJUSTMENT, redis_helpers.toRedis(raw_adjustment_ra))
@@ -321,6 +326,15 @@ class CameraAdjuster(threading.Thread):
 
                     else:
                         print('unknown state: ', current_state)
+
+                elif channel == messages.CMD_SET_RA_EMA_FACTOR:
+                    ra_ema_factor = redis_helpers.fromRedis(data)
+                    print('new ra ema factor: ', ra_ema_factor)
+
+                elif channel == messages.CMD_SET_DEC_EMA_FACTOR:
+                    dec_ema_factor = redis_helpers.fromRedis(data)
+                    print('new dec ema factor: ', dec_ema_factor)
+                    
 
 if __name__ == "__main__":
     adjuster = CameraAdjuster()
