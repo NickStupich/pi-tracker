@@ -1,5 +1,5 @@
 import is_pi
-if is_pi.is_pi:
+if is_pi.is_pi and False:
     import camera_pi as camera
 else:
     import camera_files as camera

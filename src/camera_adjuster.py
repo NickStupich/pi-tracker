@@ -57,6 +57,12 @@ class CameraAdjuster(threading.Thread):
         filtered_adjustment = 0
         ema_factor = 0.8        
 
+        smoothed_ra_num = 0
+        smoothed_abs_ra_num = 0
+        smoothed_dec_num = 0
+        smoothed_abs_dec_num = 0
+        smoothed_denom = 0
+
         current_state = AdjusterStates.NOT_GUIDING
 
         r = redis.StrictRedis(host='localhost', port=6379) 
@@ -272,6 +278,7 @@ class CameraAdjuster(threading.Thread):
                             elif current_state == AdjusterStates.START_GUIDING_DIR_ORTH_2:
                                 print('dir_orth_2, orth distance = ', orthogonal_distance)
 
+
                                 if orthogonal_distance < 0:
                                     print('back to origin, moving to guiding')
                                     filtered_adjustment_dec = 0
@@ -282,7 +289,7 @@ class CameraAdjuster(threading.Thread):
                                     smoothed_ra_num = 0
                                     smoothed_abs_ra_num = 0
                                     smoothed_dec_num = 0
-                                    smoothed_dec_abs_num = 0
+                                    smoothed_abs_dec_num = 0
                                     smoothed_denom = 0
 
 
