@@ -252,7 +252,7 @@ class CameraAdjuster(threading.Thread):
                             
                             raw_adjustment_ra = parallel_distance / RA_ADJUSTMENT_TARGET_SECONDS 
                             clipped_adjustment = np.clip(raw_adjustment_ra, -MAX_ADJUSTMENT, MAX_ADJUSTMENT)
-                            filtered_adjustment_ra = filtered_adjustment * ra_ema_factor + clipped_adjustment * (1 - ra_ema_factor)
+                            filtered_adjustment_ra = filtered_adjustment_ra * ra_ema_factor + clipped_adjustment * (1 - ra_ema_factor)
 
                             if current_state == AdjusterStates.START_GUIDING_DIR_ORTH_1:                                
                                 if guiding_dir_orth_start_time is None:
@@ -335,11 +335,11 @@ class CameraAdjuster(threading.Thread):
                         print('unknown state: ', current_state)
 
                 elif channel == messages.CMD_SET_RA_EMA_FACTOR:
-                    ra_ema_factor = redis_helpers.fromRedis(data)
-                    print('new ra ema factor: ', ra_ema_factor)
+                    ra_ema_factor = float(redis_helpers.fromRedis(data))
+                    print('new ra ema factor: ', ra_ema_factor, type(ra_ema_factor))
 
                 elif channel == messages.CMD_SET_DEC_EMA_FACTOR:
-                    dec_ema_factor = redis_helpers.fromRedis(data)
+                    dec_ema_factor = float(redis_helpers.fromRedis(data))
                     print('new dec ema factor: ', dec_ema_factor)
                     
 
