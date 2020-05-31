@@ -76,8 +76,8 @@ class UpdatesListener(object):
         ra, dec = redis_helpers.fromRedis(message['data'])
 
         c = SkyCoord(ra=ra, dec=dec, frame='icrs', unit='deg')
-        ra_output = '%dh%02dm%.2fs' % (c.ra.hms)
-        dec_output = '%dd%2dm%.1fs' % (c.dec.dms)
+        ra_output = '%dh%02dm%ds' % (c.ra.hms)
+        dec_output = '%dd%2dm%ds' % (c.dec.dms)
 
         output_str = '%s/%s' % (ra_output, dec_output)
         self.socketio.emit(messages.STATUS_DISPLAY_CURRENT_RA_DEC, {'value' : output_str}, namespace='/test')

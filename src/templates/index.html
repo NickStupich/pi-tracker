@@ -158,8 +158,11 @@
 
                     $("#solve_button").click(function() {
                         socket.emit("solve_image")});
+		     	
+		    $("#polar_align_button").click(function() {
+			socket.emit("polar_align")});
+			});
 
-		});
 	</script>
 
   </head>
@@ -258,6 +261,7 @@
 		DEC (S): <input id="gotoDecS"></br>
 		<button type="button" class="button" id="goto_button">GOTO</button>
                 <button type="button" class="button" id="solve_button">SOLVE</button>
+		<button type="button" class="button" id="polar_align_button">POLAR ALIGN</button>
 	</div>
 
 	<div>Logs<div id="NewLogs" style="height:300px;width:400px;overflow:auto;border:2px solid black"></div></div>

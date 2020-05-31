@@ -135,6 +135,10 @@ def goto_position(ra_h, ra_m, ra_s, dec_d, dec_m, dec_s):
 def solve_image():
     r.publish(messages.CMD_SOLVE_IMAGE, "")
 
+@socketio.on('polar_align', namespace='/test')
+def polar_align():
+    r.publish(messages.CMD_CALCULATE_POLAR_ALIGNMENT_ERROR, "")
+    print('polar alignment')
 
 @socketio.on('startTracking', namespace='/test')
 def startRestartTracking():
