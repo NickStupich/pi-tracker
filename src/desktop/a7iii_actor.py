@@ -17,7 +17,7 @@ import gphoto2 as gp
 import subprocess
 import time
 
-USE_FAKE_IMAGES = True
+USE_FAKE_IMAGES = False
 
 class a7iii_actor(object):
     def __init__(self):	

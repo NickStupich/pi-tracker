@@ -66,8 +66,8 @@ class polar_alignment_actor(object):
             self.ha1 = sidereel_degrees - ra
             self.dec1 = dec
 
-            self.state = GOTO
-            new_ra_target = ra + 90
+            self.state = PoleFindingStates.GOTO
+            new_ra_target = ra - 45
             new_dec_target = dec
 
             self.r.publish(messages.CMD_GOTO_POSITION, redis_helpers.toRedis((new_ra_target, new_dec_target)))
@@ -88,16 +88,16 @@ class polar_alignment_actor(object):
         err_elevation, err_azimuth = get_polar_align_error(self.ha1, self.dec1, self.ha2, self.dec2, self.err_ra, self.err_dec, HOME_LATITUDE)
 
         print('elevation error: ', err_elevation)
-        print('err_azimuth: ', err_azimith)
+        print('err_azimuth: ', err_azimuth)
 
-        self.r.publish(messages.STATUS_POLAR_ALIGNMENT_RESULT, redis_helpers.toRedis(""))
+        self.r.publish(messages.STATUS_POLAR_ALIGNMENT_RESULT, redis_helpers.toRedis((err_elevation, err_azimuth)))
 
     def goto_complete_handler(self, msg):
         print('goto complete handler')
         
-        if self.state == GOTO:
+        if self.state == PoleFindingStates.GOTO:
             print('starting solve2')
-            self.state = SOLVE_2
+            self.state = PoleFindingStates.SOLVE_2
             self.r.publish(messages.CMD_SOLVE_IMAGE, redis_helpers.toRedis(""))
 
     def stop_all_handler(self):
