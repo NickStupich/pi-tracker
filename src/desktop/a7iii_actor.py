@@ -30,6 +30,7 @@ class a7iii_actor(object):
             self.camera = gp.Camera()
             self.camera.init()
 
+        print('initialized camera')
         self.thread = self.p.run_in_thread(sleep_time = 0.1)
 
 
@@ -41,9 +42,10 @@ class a7iii_actor(object):
     def solve_image_handler(self, msg):
         print('solve_image_handler')
 
-        img_path = self.take_picture(exposure_time_seconds = 2)
+        img_path = self.take_picture(exposure_time_seconds = 5)
 
-        arcsecperpix = (9.3, 9.4)
+        # arcsecperpix = (24.0, 26.0)
+        # arcsecperpix = (9.32, 9.34)
         arcsecperpix = (2.0, 2.2)
 
         ra, dec = self.solve_image(img_path, arcsecperpix = arcsecperpix)
@@ -129,8 +131,13 @@ class a7iii_actor(object):
 
         imageio.imsave(jpeg_path, img_rgb)
 
-        cmd = '/usr/local/astrometry/bin/solve-field {img_path} -L {arcseclow} -H {arcsechigh} -u arcsecperpix --overwrite --sigma {sigma} --cpulimit 60'.format(
-                        img_path = jpeg_path, arcseclow = arcsecperpix[0], arcsechigh = arcsecperpix[1], sigma=sigma)
+        cmd = '{image_solve_path} {img_path} -L {arcseclow} -H {arcsechigh} -u arcsecperpix --overwrite --sigma {sigma} --cpulimit 60 --no-plots'.format(
+                        # image_solve_path = "/usr/local/astrometry/bin/solve-field", 
+                        image_solve_path = "/home/nick/miniconda3/bin/solve-field",
+                        img_path = jpeg_path, 
+                        arcseclow = arcsecperpix[0], 
+                        arcsechigh = arcsecperpix[1], 
+                        sigma=sigma)
 
         if not blind:
             cmd += ' --ra {ra} --dec {dec} --radius {radius}'.format(ra=ra_est, dec=dec_est, radius=radius)
